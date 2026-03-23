@@ -9,10 +9,10 @@ export function AuthProvider({ children }) {
   
   const [usersDb, setUsersDb] = useState([]); 
 
-  const register = (email, password, name) => {
+  const register = (email, password, name, isBarber) => {
     const userExists = usersDb.find(u => u.email === email);
     if (userExists) {
-      alert('Este e-mail já está cadastrado!');
+      alert('Este usuário já está cadastrado!');
       return false;
     }
 
@@ -23,12 +23,12 @@ export function AuthProvider({ children }) {
       name,
       email,
       password,
+      isBarber,
     };
 
 
     setUsersDb([...usersDb, newUser]);
     alert('Cadastro realizado com sucesso! Agora você pode fazer o login.');
-    <Redirect href="/auth" />
     return true;
   };
 
@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
     const foundUser = usersDb.find(u => u.email === email && u.password === password);
     
     if (foundUser) {
-      setUser({ id: foundUser.id, name: foundUser.name, email: foundUser.email });
+      setUser({ id: foundUser.id, name: foundUser.name, email: foundUser.email, isBarber: foundUser.isBarber });
       return true;
     }
     
