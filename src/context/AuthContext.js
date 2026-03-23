@@ -1,0 +1,58 @@
+import { Redirect } from 'expo-router';
+import { createContext, useState, useContext } from 'react';
+
+export const AuthContext = createContext({});
+
+export function AuthProvider({ children }) {
+
+  const [user, setUser] = useState(null); 
+  
+  const [usersDb, setUsersDb] = useState([]); 
+
+  const register = (email, password, name) => {
+    const userExists = usersDb.find(u => u.email === email);
+    if (userExists) {
+      alert('Este e-mail já está cadastrado!');
+      return false;
+    }
+
+    const nextId = usersDb.length > 0 ? usersDb[usersDb.length - 1].id + 1 : 1;
+
+    const newUser = {
+      id: nextId,
+      name,
+      email,
+      password,
+    };
+
+
+    setUsersDb([...usersDb, newUser]);
+    alert('Cadastro realizado com sucesso! Agora você pode fazer o login.');
+    <Redirect href="/auth" />
+    return true;
+  };
+
+  const login = (email, password) => {
+    const foundUser = usersDb.find(u => u.email === email && u.password === password);
+    
+    if (foundUser) {
+      setUser({ id: foundUser.id, name: foundUser.name, email: foundUser.email });
+      return true;
+    }
+    
+    alert('E-mail ou senha incorretos!');
+    return false;
+  };
+
+  const logout = () => {
+    setUser(null);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, login, register, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export const useAuth = () => useContext(AuthContext);
