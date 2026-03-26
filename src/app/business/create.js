@@ -41,7 +41,7 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    if (!location) {
+    if (!location || location.latitude === undefined) {
       alert('Selecione o ponto do estabelecimento no mapa.');
       return;
     }
@@ -53,7 +53,10 @@ export default function CreateBarbershopScreen() {
       bairro: bairro.trim(),
       cidade: cidade.trim(),
       imageUrl: imageUrl.trim() || DEFAULT_IMAGE,
-      location: location,
+      location: {
+        latitude: location.latitude,
+        longitude: location.longitude
+      }
     });
 
     alert('Estabelecimento cadastrado com sucesso!');
@@ -71,8 +74,12 @@ export default function CreateBarbershopScreen() {
             return;
         }
 
-        const location = await Location.getCurrentPositionAsync();
-        setLocation(location.coords);
+        const position = await Location.getCurrentPositionAsync();
+        const coords = {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        }
+        setLocation(coords)
         setMapRegion({
           latitude: location.latitude,
           longitude: location.longitude,
@@ -207,17 +214,9 @@ export default function CreateBarbershopScreen() {
                 setLocationMessage('Ponto atualizado. Confirme o cadastro abaixo.');
               }}
             >
-              {location && <Marker coordinate={
-                !location?
-                  {
-                    latitude: 0,
-                    longitude: 0,
-                    latitudeDelta: 0,
-                    longitudeDelta: 1000,
-                  } :
-                  mapRegion
-                } 
-                />}
+              {location && location.latitude && (
+                <Marker coordinate={location} />
+              )}
             </MapView>
           </View>
         </View>

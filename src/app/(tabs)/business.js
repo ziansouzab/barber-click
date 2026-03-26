@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useBarbershops } from '../../../context/BarbershopContext';
-import { useAuth } from '../../../context/AuthContext';
-import { BarbershopCard } from '../../../components/barbershopCard';
+import { useBarbershops } from '../../context/BarbershopContext';
+import { useAuth } from '../../context/AuthContext';
+import { BarbershopCard } from '../../components/barbershopCard';
 
 export default function BusinessTab() {
   const { barbershops } = useBarbershops();

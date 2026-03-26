@@ -3,7 +3,7 @@ import { createContext, useContext, useMemo, useState } from 'react';
 const BarbershopContext = createContext(undefined);
 
 export function BarbershopProvider({ children }) {
-  const [barbershops, setBarbershops] = useState(null);
+  const [barbershops, setBarbershops] = useState([]);
 
   const addBarbershop = (barbershop) => {
     setBarbershops((prev) => [

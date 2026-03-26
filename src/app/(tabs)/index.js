@@ -1,7 +1,7 @@
 import { StyleSheet, View, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { BarbershopCard } from '../../../components/barbershopCard';
-import { useBarbershops } from '../../../context/BarbershopContext';
+import { BarbershopCard } from '../../components/barbershopCard';
+import { useBarbershops } from '../../context/BarbershopContext';
 
 export default function HomeScreen() {
   const { barbershops } = useBarbershops();
