@@ -2,6 +2,9 @@ import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export function BarbershopCard({ name, rating, bairro, cidade, imageUrl, priceRange, onPress }) {
+  const hasRating = typeof rating === 'number' && rating > 0;
+  const ratingLabel = hasRating ? rating.toFixed(1) : 'Novo';
+
   return (
     <TouchableOpacity 
       style={styles.cardContainer}
@@ -20,8 +23,8 @@ export function BarbershopCard({ name, rating, bairro, cidade, imageUrl, priceRa
         </Text>
         
         <View style={styles.metaContainer}>
-          <FontAwesome name="star" size={14} color="#F5A623" />
-          <Text style={styles.rating}>{rating?.toFixed(1)}</Text>
+          <FontAwesome name="star" size={14} color={hasRating ? '#F5A623' : '#B0B0B0'} />
+          <Text style={[styles.rating, !hasRating && styles.ratingNew]}>{ratingLabel}</Text>
           <Text style={styles.separator}>•</Text>
           <Text style={styles.metaText}>{bairro}, {cidade}</Text>
         </View>
@@ -71,6 +74,9 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#F5A623',
     marginLeft: 4,
+  },
+  ratingNew: {
+    color: '#6F6F6F',
   },
   separator: {
     fontSize: 14,

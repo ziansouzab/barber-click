@@ -7,7 +7,9 @@ export function AuthProvider({ children }) {
 
   const [user, setUser] = useState(null); 
   
-  const [usersDb, setUsersDb] = useState([]); 
+  const [usersDb, setUsersDb] = useState([]);
+  
+
 
   const register = (email, password, name, isBarber) => {
     const userExists = usersDb.find(u => u.email === email);

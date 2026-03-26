@@ -1,29 +1,11 @@
-import { StyleSheet, View, FlatList} from 'react-native';
-import { BarbershopCard } from '../../components/barbershopCard';
+import { StyleSheet, View, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const MOCK_BARBERSHOPS = [
-  {
-    id: '1',
-    name: 'Barbearia do Igão',
-    rating: 4.8,
-    bairro: "Centro",
-    cidade: "Vassouras",
-    priceRange: '$$',
-    imageUrl: '../../assets/icon.png',
-  },
-  {
-    id: '2',
-    name: 'Barbearia do Helinho',
-    rating: 4.5,
-    bairro: "Centro",
-    cidade: "Pirai",
-    priceRange: '$$',
-    imageUrl: '../../assets/icon.png',
-  },
-];
+import { BarbershopCard } from '../../../components/barbershopCard';
+import { useBarbershops } from '../../../context/BarbershopContext';
 
 export default function HomeScreen() {
+  const { barbershops } = useBarbershops();
+
   const renderBarbershop = ({ item }) => (
     <BarbershopCard
       name={item.name}
@@ -46,10 +28,11 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <FlatList
-          data={MOCK_BARBERSHOPS}
+          data={barbershops}
           keyExtractor={(item) => item.id}
           renderItem={renderBarbershop}
           contentContainerStyle={styles.listContent}
+          getItemLayout={getItemLayout}
           showsVerticalScrollIndicator={false}
         />
       </View>
