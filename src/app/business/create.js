@@ -48,6 +48,7 @@ export default function CreateBarbershopScreen() {
 
     addBarbershop({
       name: name.trim(),
+      owner: user.id,
       description: description.trim(),
       priceRange: priceRange.trim() || '$$',
       bairro: bairro.trim(),
