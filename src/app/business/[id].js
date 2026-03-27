@@ -1,12 +1,12 @@
-import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, Modal, useWindowDimensions } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
+import { CameraModal } from '../../components/CameraModal';
 
 export const options = {
   headerShown: true,
@@ -23,10 +23,6 @@ export default function BarbershopDetailScreen() {
   const [activeTab, setActiveTab] = useState('info');
   const [photos, setPhotos] = useState([]);
   const [cameraOpen, setCameraOpen] = useState(false);
-  const [facing, setFacing] = useState('back');
-  const [preview, setPreview] = useState(null);
-  const [permission, requestPermission] = useCameraPermissions();
-  const cameraRef = useRef(null);
 
   const shop = barbershops.find((b) => b.id === id);
 
@@ -48,39 +44,6 @@ export default function BarbershopDetailScreen() {
   const hasLocation = shop.location && shop.location.latitude && shop.location.longitude;
   const isOwner = user?.isBarber && user.id === shop.owner;
   const photoSize = (width - 40 - 16) / 3;
-
-  const handleOpenCamera = async () => {
-    if (!permission?.granted) {
-      const result = await requestPermission();
-      if (!result.granted) {
-        alert('Permissao de camera necessaria para tirar fotos.');
-        return;
-      }
-    }
-    setCameraOpen(true);
-  };
-
-  const handleTakePicture = async () => {
-    if (cameraRef.current) {
-      const photo = await cameraRef.current.takePictureAsync();
-      setPreview(photo.uri);
-    }
-  };
-
-  const handleConfirmPhoto = () => {
-    setPhotos((prev) => [...prev, preview]);
-    setPreview(null);
-    setCameraOpen(false);
-  };
-
-  const handleDiscardPhoto = () => {
-    setPreview(null);
-  };
-
-  const handleCloseCamera = () => {
-    setPreview(null);
-    setCameraOpen(false);
-  };
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -170,7 +133,7 @@ export default function BarbershopDetailScreen() {
               {isOwner && (
                 <TouchableOpacity
                   style={[styles.addPhotoButton, { width: photoSize, height: photoSize }]}
-                  onPress={handleOpenCamera}
+                  onPress={() => setCameraOpen(true)}
                   activeOpacity={0.7}
                 >
                   <FontAwesome name="plus" size={28} color="#0F9D58" />
@@ -182,47 +145,14 @@ export default function BarbershopDetailScreen() {
         )}
       </ScrollView>
 
-      <Modal visible={cameraOpen} animationType="slide">
-        <SafeAreaView style={styles.cameraContainer}>
-          {preview ? (
-            <View style={styles.previewContainer}>
-              <Image source={{ uri: preview }} style={styles.previewImage} resizeMode="cover" />
-              <View style={styles.previewActions}>
-                <TouchableOpacity style={styles.previewButtonDiscard} onPress={handleDiscardPhoto}>
-                  <FontAwesome name="times" size={22} color="#FFF" />
-                  <Text style={styles.previewButtonText}>Descartar</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.previewButtonConfirm} onPress={handleConfirmPhoto}>
-                  <FontAwesome name="check" size={22} color="#FFF" />
-                  <Text style={styles.previewButtonText}>Usar foto</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.cameraContent}>
-              <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
-                <View style={styles.cameraTopBar}>
-                  <TouchableOpacity style={styles.cameraCloseButton} onPress={handleCloseCamera}>
-                    <FontAwesome name="arrow-left" size={20} color="#FFF" />
-                  </TouchableOpacity>
-                </View>
-              </CameraView>
-              <View style={styles.cameraBottomBar}>
-                <TouchableOpacity
-                  style={styles.flipButton}
-                  onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-                >
-                  <FontAwesome name="refresh" size={22} color="#FFF" />
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.captureButton} onPress={handleTakePicture}>
-                  <View style={styles.captureInner} />
-                </TouchableOpacity>
-                <View style={{ width: 50 }} />
-              </View>
-            </View>
-          )}
-        </SafeAreaView>
-      </Modal>
+      <CameraModal
+        visible={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onPhotoTaken={(uri) => {
+          setPhotos((prev) => [...prev, uri]);
+          setCameraOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -382,93 +312,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '600',
     color: '#0F9D58',
-  },
-  cameraContainer: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  cameraContent: {
-    flex: 1,
-  },
-  camera: {
-    flex: 1,
-  },
-  cameraTopBar: {
-    paddingTop: 16,
-    paddingHorizontal: 16,
-  },
-  cameraCloseButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cameraBottomBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 40,
-    paddingVertical: 24,
-    backgroundColor: '#000',
-  },
-  flipButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  captureButton: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    borderWidth: 4,
-    borderColor: '#FFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  captureInner: {
-    width: 58,
-    height: 58,
-    borderRadius: 29,
-    backgroundColor: '#FFF',
-  },
-  previewContainer: {
-    flex: 1,
-  },
-  previewImage: {
-    flex: 1,
-  },
-  previewActions: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 24,
-    backgroundColor: '#000',
-  },
-  previewButtonDiscard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#C0392B',
-  },
-  previewButtonConfirm: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: '#0F9D58',
-  },
-  previewButtonText: {
-    color: '#FFF',
-    fontWeight: '600',
-    fontSize: 15,
   },
 });

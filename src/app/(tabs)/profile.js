@@ -1,12 +1,16 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
+import { CameraModal } from '../../components/CameraModal';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
+  const [avatarUri, setAvatarUri] = useState(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -30,9 +34,18 @@ export default function ProfileScreen() {
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.avatarContainer}>
-          <View style={styles.avatar}>
-            <FontAwesome name="user" size={48} color="#FFF" />
-          </View>
+          <TouchableOpacity style={styles.avatarWrapper} onPress={() => setCameraOpen(true)} activeOpacity={0.8}>
+            {avatarUri ? (
+              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            ) : (
+              <View style={styles.avatar}>
+                <FontAwesome name="user" size={48} color="#FFF" />
+              </View>
+            )}
+            <View style={styles.avatarBadge}>
+              <FontAwesome name="camera" size={12} color="#FFF" />
+            </View>
+          </TouchableOpacity>
           <Text style={styles.name}>{user.name}</Text>
           {user.isBarber && (
             <View style={styles.badge}>
@@ -63,6 +76,15 @@ export default function ProfileScreen() {
           <Text style={styles.logoutText}>Sair da conta</Text>
         </TouchableOpacity>
       </View>
+
+      <CameraModal
+        visible={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onPhotoTaken={(uri) => {
+          setAvatarUri(uri);
+          setCameraOpen(false);
+        }}
+      />
     </SafeAreaView>
   );
 }
@@ -102,6 +124,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
   },
+  avatarWrapper: {
+    position: 'relative',
+  },
   avatar: {
     width: 96,
     height: 96,
@@ -109,6 +134,24 @@ const styles = StyleSheet.create({
     backgroundColor: '#0F9D58',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarImage: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#333',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#F8F9FA',
   },
   name: {
     fontSize: 22,
