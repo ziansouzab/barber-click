@@ -167,9 +167,9 @@ export default function Auth() {
             <TouchableOpacity style={styles.mainButton} onPress={handleLogin}>
               <Text style={styles.buttonText}>Entrar</Text>
             </TouchableOpacity>
-            {biometricSupport && (
+            {biometricSupport && biometric && (
               <TouchableOpacity style={[styles.mainButton, { backgroundColor: '#333', marginTop: 10 }]} onPress={handleBiometricAuth}>
-                <Text style={styles.buttonText}> {biometric ? 'Entrar com Biometria' : 'Cadastre sua biometria'}</Text>
+                <Text style={styles.buttonText}>Entrar com biometria</Text>
               </TouchableOpacity>
             )}
           </>
