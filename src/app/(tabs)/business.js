@@ -29,7 +29,7 @@ export default function BusinessTab() {
       cidade={item.cidade}
       priceRange={item.priceRange}
       imageUrl={item.imageUrl}
-      onPress={() => alert(`Navegar para a barbearia: ${item.id}`)}
+      onPress={() => router.push(`/business/${item.id}`)}
     />
   );
 
