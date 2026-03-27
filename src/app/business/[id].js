@@ -7,6 +7,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
 import { CameraModal } from '../../components/CameraModal';
+import { Stack } from 'expo-router';
 
 export const options = {
   headerShown: true,
@@ -47,6 +48,7 @@ export default function BarbershopDetailScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen options={{ title: shop.name, headerShown: true }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Image
           source={typeof shop.imageUrl === 'number' ? shop.imageUrl : { uri: shop.imageUrl }}
@@ -85,7 +87,7 @@ export default function BarbershopDetailScreen() {
               <Text style={styles.sectionTitle}>Localizacao</Text>
               <View style={styles.locationRow}>
                 <FontAwesome name="map-marker" size={16} color="#0F9D58" />
-                <Text style={styles.locationText}>{shop.bairro}, {shop.cidade}</Text>
+                <Text style={styles.locationText}>{shop.endereco}</Text>
               </View>
             </View>
 
@@ -119,7 +121,7 @@ export default function BarbershopDetailScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.photosSubtitle}>Mostre o resultado do seu trabalho!</Text>
+            <Text style={styles.photosSubtitle}>Esse estabelecimento ainda não adicionou imagens.</Text>
             <View style={styles.photosGrid}>
               {photos.map((uri, index) => (
                 <Image
