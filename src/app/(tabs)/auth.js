@@ -1,20 +1,34 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Redirect } from 'expo-router';
+import { useRouter } from 'expo-router';
+import * as LocalAuthentication from 'expo-local-authentication';
 
 export default function Auth() {
-  const { user, login, register } = useAuth();
+  const { user, login, register, linkBiometric, biometric } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedRole, setSelectedRole] = useState('cliente');
+  const [biometricSupport, setBiometricSupport] = useState(false);
+  const [isProcessingLogin, setIsProcessingLogin] = useState(false);
+  const router = useRouter();
 
-  if (user) {
-    return <Redirect href="/" />;
-  }
+  useEffect(() => {
+    (async () => {
+      const compativel = await LocalAuthentication.hasHardwareAsync();
+      setBiometricSupport(compativel);
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (user && !isProcessingLogin) {
+      return router.replace("/profile");
+    }
+  }, [user, isProcessingLogin]);
+
 
   const handleRegister = () => {
     if (!email || !password || !name) {
@@ -31,6 +45,63 @@ export default function Auth() {
       setPassword(''); 
     }
   };
+
+  const handleLogin = () => {
+    setIsProcessingLogin(true);
+
+    const success = login(email, password);
+    if(success){
+      if (!biometric && biometricSupport) {
+        Alert.alert(
+          "Acesso Rápido",
+          "Utilize sua biometria para acessar o app mais rápido da próxima vez",
+          [
+            {
+              text: "Agora não",
+              onPress: () => router.replace("/")
+            },
+  
+            {
+              text: "Ativar",
+              onPress: async() => {
+                const auth = await LocalAuthentication.authenticateAsync();
+  
+                if (auth.success) {
+                  linkBiometric(email, password);
+                } else {
+                  alert("Erro ao ler biometria, tente novamente no próximo login");
+                }
+                router.replace("/");
+              }
+            }
+          ]
+        );
+      } else {
+        router.replace("/");
+      }
+    } else {
+      setIsProcessingLogin(false);
+    }
+  }
+
+  const handleBiometricAuth = async() => {
+    if (!biometric) {
+      alert("Faça login com usuário e senha para vincular sua biometria.");
+      return;
+    }
+
+    const result = await LocalAuthentication.authenticateAsync();
+
+    if (result.success) {
+      const { email, password } = biometric;
+
+      const success = login(email, password);
+
+      if(success) {
+        router.replace("/");
+      }
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -92,9 +163,16 @@ export default function Auth() {
             <Text style={styles.buttonText}>Cadastrar</Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity style={styles.mainButton} onPress={() => login(email, password)}>
-            <Text style={styles.buttonText}>Entrar</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.mainButton} onPress={handleLogin}>
+              <Text style={styles.buttonText}>Entrar</Text>
+            </TouchableOpacity>
+            {biometricSupport && (
+              <TouchableOpacity style={[styles.mainButton, { backgroundColor: '#333', marginTop: 10 }]} onPress={handleBiometricAuth}>
+                <Text style={styles.buttonText}> {biometric ? 'Entrar com Biometria' : 'Cadastre sua biometria'}</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
       </View>
 
