@@ -87,7 +87,7 @@ export default function BarbershopDetailScreen() {
               <Text style={styles.sectionTitle}>Localizacao</Text>
               <View style={styles.locationRow}>
                 <FontAwesome name="map-marker" size={16} color="#0F9D58" />
-                <Text style={styles.locationText}>{shop.bairro}, {shop.cidade}</Text>
+                <Text style={styles.locationText}>{shop.endereco}</Text>
               </View>
             </View>
 

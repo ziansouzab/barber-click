@@ -20,9 +20,6 @@ export default function CreateBarbershopScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [priceRange, setPriceRange] = useState('$$');
-  const [bairro, setBairro] = useState('');
-  const [cidade, setCidade] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
   const [location, setLocation] = useState(null);
@@ -36,8 +33,33 @@ export default function CreateBarbershopScreen() {
 
   const hasPermissionIssue = useMemo(() => locationMessage.includes('negada'), [locationMessage]);
 
+  const getAddressFromCoords = async (latitude, longitude) => {
+    try {
+      let response = await Location.reverseGeocodeAsync({
+        latitude,
+        longitude
+      });
+
+      if (response.length > 0) {
+        let address = response[0];
+
+        const addressParts = [address.street, address.district].filter(Boolean);
+        const halfAddress = addressParts.join(", ");
+
+        const fullAddress = address.city ? `${halfAddress}${halfAddress ? '-' : ''}${address.city}` : halfAddress;
+
+        if(fullAddress) {
+          return fullAddress
+        };
+      }
+    } catch (error) {
+      console.error("Erro ao converter coordenadas em endereço:", error);
+    }
+  };
+
   const handleSubmit = () => {
-    if (!name.trim() || !bairro.trim() || !cidade.trim()) {
+
+    if (!name.trim()) {
       alert('Preencha pelo menos o nome, bairro e cidade antes de salvar.');
       return;
     }
@@ -51,14 +73,12 @@ export default function CreateBarbershopScreen() {
       name: name.trim(),
       owner: user.id,
       description: description.trim(),
-      priceRange: priceRange.trim() || '$$',
-      bairro: bairro.trim(),
-      cidade: cidade.trim(),
-      imageUrl: imageUrl.trim() || DEFAULT_IMAGE,
+      imageUrl: imageUrl.trim(),
       location: {
         latitude: location.latitude,
         longitude: location.longitude
-      }
+      },
+      endereco: getAddressFromCoords(location.latitude, location.longitude)
     });
 
     alert('Estabelecimento cadastrado com sucesso!');
@@ -143,39 +163,7 @@ export default function CreateBarbershopScreen() {
 
         <View style={styles.row}>
           <View style={[styles.formGroup, styles.rowItem]}>
-            <Text style={styles.label}>Bairro</Text>
-            <TextInput
-              value={bairro}
-              onChangeText={setBairro}
-              placeholder="Bairro"
-              style={styles.input}
-            />
-          </View>
-
-          <View style={[styles.formGroup, styles.rowItem]}>
-            <Text style={styles.label}>Cidade</Text>
-            <TextInput
-              value={cidade}
-              onChangeText={setCidade}
-              placeholder="Cidade"
-              style={styles.input}
-            />
-          </View>
-        </View>
-
-        <View style={styles.row}>
-          <View style={[styles.formGroup, styles.rowItem]}>
-            <Text style={styles.label}>Faixa de preço</Text>
-            <TextInput
-              value={priceRange}
-              onChangeText={setPriceRange}
-              placeholder="Ex: $$ - $$$"
-              style={styles.input}
-            />
-          </View>
-
-          <View style={[styles.formGroup, styles.rowItem]}>
-            <Text style={styles.label}>Foto (URL)</Text>
+            <Text style={styles.label}>Selecionar Foto</Text>
             <TextInput
               value={imageUrl}
               onChangeText={setImageUrl}
