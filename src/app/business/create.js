@@ -6,6 +6,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
+import { Stack } from 'expo-router';
 
 export const options = {
   headerShown: true,
@@ -99,6 +100,7 @@ export default function CreateBarbershopScreen() {
   if (!user?.isBarber) {
     return (
       <SafeAreaView style={styles.safeArea}>
+        <Stack.Screen options={{ title: 'Novo Estabelecimento', headerShown: true }} />
         <View style={styles.lockedContainer}>
           <Text style={styles.lockedTitle}>Acesso restrito</Text>
           <Text style={styles.lockedMessage}>Somente barbeiros autenticados podem cadastrar estabelecimentos.</Text>
@@ -112,6 +114,7 @@ export default function CreateBarbershopScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
+      <Stack.Screen options={{ title: 'Novo Estabelecimento', headerShown: true }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Cadastrar novo estabelecimento</Text>
         <Text style={styles.subtitle}>Preencha as informações básicas e selecione o ponto exato no mapa.</Text>
