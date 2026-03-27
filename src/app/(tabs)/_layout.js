@@ -19,7 +19,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="business"
         options={{
-          title: "Business",
+          title: "Estabelecimentos",
           tabBarIcon: ({ color }) => <FontAwesome size={28} name="suitcase" color={color} />,
           href: user?.isBarber ? '/business': null
         }}

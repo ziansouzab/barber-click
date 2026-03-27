@@ -12,9 +12,7 @@ export default function HomeScreen() {
     <BarbershopCard
       name={item.name}
       rating={item.rating}
-      bairro={item.bairro}
-      cidade={item.cidade}
-      priceRange={item.priceRange}
+      endereco={item.endereco}
       imageUrl={item.imageUrl}
       onPress={() => router.push(`/business/${item.id}`)}
     />
