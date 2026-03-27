@@ -1,10 +1,12 @@
 import { StyleSheet, View, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { BarbershopCard } from '../../components/barbershopCard';
 import { useBarbershops } from '../../context/BarbershopContext';
 
 export default function HomeScreen() {
   const { barbershops } = useBarbershops();
+  const router = useRouter();
 
   const renderBarbershop = ({ item }) => (
     <BarbershopCard
@@ -14,7 +16,7 @@ export default function HomeScreen() {
       cidade={item.cidade}
       priceRange={item.priceRange}
       imageUrl={item.imageUrl}
-      onPress={() => alert(`Navegar para a barbearia: ${item.id}`)}
+      onPress={() => router.push(`/business/${item.id}`)}
     />
   );
 
