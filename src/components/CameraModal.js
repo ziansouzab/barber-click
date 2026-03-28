@@ -1,14 +1,36 @@
-import { useState, useRef } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Modal } from 'react-native';
+import { useState, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Modal, FlatList, useWindowDimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
+import * as MediaLibrary from 'expo-media-library';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 export function CameraModal({ visible, onClose, onPhotoTaken }) {
   const [facing, setFacing] = useState('back');
   const [preview, setPreview] = useState(null);
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryPhotos, setGalleryPhotos] = useState([]);
   const [permission, requestPermission] = useCameraPermissions();
+  const [mediaPermission, requestMediaPermission] = MediaLibrary.usePermissions();
   const cameraRef = useRef(null);
+  const { width } = useWindowDimensions();
+
+  const galleryItemSize = (width - 8) / 3;
+
+  useEffect(() => {
+    if (showGallery && mediaPermission?.granted) {
+      loadGalleryPhotos();
+    }
+  }, [showGallery, mediaPermission?.granted]);
+
+  const loadGalleryPhotos = async () => {
+    const assets = await MediaLibrary.getAssetsAsync({
+      mediaType: 'photo',
+      sortBy: ['creationTime'],
+      first: 50,
+    });
+    setGalleryPhotos(assets.assets);
+  };
 
   const handleTakePicture = async () => {
     if (cameraRef.current) {
@@ -17,9 +39,26 @@ export function CameraModal({ visible, onClose, onPhotoTaken }) {
     }
   };
 
+  const handleOpenGallery = async () => {
+    if (!mediaPermission?.granted) {
+      const result = await requestMediaPermission();
+      if (!result.granted) {
+        alert('Permissao de acesso a galeria necessaria para selecionar fotos.');
+        return;
+      }
+    }
+    setShowGallery(true);
+  };
+
+  const handleSelectFromGallery = (uri) => {
+    setShowGallery(false);
+    setPreview(uri);
+  };
+
   const handleConfirm = () => {
     onPhotoTaken(preview);
     setPreview(null);
+    setShowGallery(false);
   };
 
   const handleDiscard = () => {
@@ -28,6 +67,7 @@ export function CameraModal({ visible, onClose, onPhotoTaken }) {
 
   const handleClose = () => {
     setPreview(null);
+    setShowGallery(false);
     onClose();
   };
 
@@ -38,6 +78,10 @@ export function CameraModal({ visible, onClose, onPhotoTaken }) {
           <Text style={styles.permissionText}>Permita o acesso a camera para tirar fotos.</Text>
           <TouchableOpacity style={styles.permissionButton} onPress={requestPermission}>
             <Text style={styles.permissionButtonText}>Permitir camera</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.galleryLink} onPress={handleOpenGallery}>
+            <FontAwesome name="image" size={16} color="#FFF" />
+            <Text style={styles.galleryLinkText}>Escolher da galeria</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.permissionClose} onPress={handleClose}>
             <Text style={styles.permissionCloseText}>Voltar</Text>
@@ -64,6 +108,33 @@ export function CameraModal({ visible, onClose, onPhotoTaken }) {
               </TouchableOpacity>
             </View>
           </View>
+        ) : showGallery ? (
+          <View style={styles.galleryContainer}>
+            <View style={styles.galleryHeader}>
+              <TouchableOpacity onPress={() => setShowGallery(false)}>
+                <FontAwesome name="arrow-left" size={20} color="#FFF" />
+              </TouchableOpacity>
+              <Text style={styles.galleryTitle}>Galeria</Text>
+              <View style={{ width: 20 }} />
+            </View>
+            <FlatList
+              data={galleryPhotos}
+              keyExtractor={(item) => item.id}
+              numColumns={3}
+              contentContainerStyle={styles.galleryGrid}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => handleSelectFromGallery(item.uri)}>
+                  <Image
+                    source={{ uri: item.uri }}
+                    style={{ width: galleryItemSize, height: galleryItemSize }}
+                  />
+                </TouchableOpacity>
+              )}
+              ListEmptyComponent={
+                <Text style={styles.galleryEmpty}>Nenhuma foto encontrada na galeria.</Text>
+              }
+            />
+          </View>
         ) : (
           <View style={styles.cameraContent}>
             <CameraView style={styles.camera} facing={facing} ref={cameraRef}>
@@ -74,16 +145,18 @@ export function CameraModal({ visible, onClose, onPhotoTaken }) {
               </View>
             </CameraView>
             <View style={styles.bottomBar}>
-              <TouchableOpacity
-                style={styles.flipButton}
-                onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
-              >
-                <FontAwesome name="refresh" size={22} color="#FFF" />
+              <TouchableOpacity style={styles.sideButton} onPress={handleOpenGallery}>
+                <FontAwesome name="image" size={22} color="#FFF" />
               </TouchableOpacity>
               <TouchableOpacity style={styles.captureButton} onPress={handleTakePicture}>
                 <View style={styles.captureInner} />
               </TouchableOpacity>
-              <View style={{ width: 50 }} />
+              <TouchableOpacity
+                style={styles.sideButton}
+                onPress={() => setFacing((f) => (f === 'back' ? 'front' : 'back'))}
+              >
+                <FontAwesome name="refresh" size={22} color="#FFF" />
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -121,6 +194,20 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
+  galleryLink: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  galleryLinkText: {
+    color: '#FFF',
+    fontWeight: '600',
+    fontSize: 15,
+  },
   permissionClose: {
     paddingVertical: 10,
   },
@@ -135,7 +222,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   topBar: {
-    paddingTop: 16,
+    paddingTop: 48,
     paddingHorizontal: 16,
   },
   closeButton: {
@@ -154,7 +241,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     backgroundColor: '#000',
   },
-  flipButton: {
+  sideButton: {
     width: 50,
     height: 50,
     borderRadius: 25,
@@ -211,5 +298,30 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontWeight: '600',
     fontSize: 15,
+  },
+  galleryContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  galleryHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  galleryTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  galleryGrid: {
+    gap: 2,
+  },
+  galleryEmpty: {
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 48,
+    fontSize: 14,
   },
 });
