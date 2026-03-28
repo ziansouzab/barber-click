@@ -1,5 +1,6 @@
 import { createContext, useState, useContext } from 'react';
 
+
 export const AuthContext = createContext({});
 
 export function AuthProvider({ children }) {
@@ -20,14 +21,7 @@ export function AuthProvider({ children }) {
 
     const nextId = usersDb.length > 0 ? usersDb[usersDb.length - 1].id + 1 : 1;
 
-    const newUser = {
-      id: nextId,
-      name,
-      email,
-      password,
-      isBarber,
-    };
-
+    const newUser = { id: nextId, name, email, password, isBarber};
 
     setUsersDb([...usersDb, newUser]);
     alert('Cadastro realizado com sucesso! Agora você pode fazer o login.');
@@ -35,14 +29,16 @@ export function AuthProvider({ children }) {
   };
 
   const login = (email, password) => {
-    const foundUser = usersDb.find(u => u.email === email && u.password === password);
-    
+    const foundUser = usersDb.find(
+      (u) => u.email === email && u.password === password,
+    );
+
     if (foundUser) {
-      setUser({ id: foundUser.id, name: foundUser.name, email: foundUser.email, isBarber: foundUser.isBarber });
+      setUser({ id: foundUser.id, name: foundUser.name, email: foundUser.email, isBarber: foundUser.isBarber});
       return true;
     }
-    
-    alert('E-mail ou senha incorretos!');
+
+    alert("E-mail ou senha incorretos!");
     return false;
   };
 
@@ -56,7 +52,9 @@ export function AuthProvider({ children }) {
   }
 
   return (
+
     <AuthContext.Provider value={{ user, login, register, logout, linkBiometric, biometric }}>
+
       {children}
     </AuthContext.Provider>
   );
