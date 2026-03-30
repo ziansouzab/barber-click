@@ -3,10 +3,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image} from 'react-native';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
 import { Stack } from 'expo-router';
+import { CameraModal } from '../../components/CameraModal';
+import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
 
 export const options = {
   headerShown: true,
@@ -20,7 +22,8 @@ export default function CreateBarbershopScreen() {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [imageUrl, setImageUrl] = useState('');
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [imageUri, setImageUri] = useState(null);
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -73,7 +76,7 @@ export default function CreateBarbershopScreen() {
       name: name.trim(),
       owner: user.id,
       description: description.trim(),
-      imageUrl: imageUrl.trim(),
+      imageUri: imageUri.trim(),
       location: {
         latitude: location.latitude,
         longitude: location.longitude
@@ -161,16 +164,14 @@ export default function CreateBarbershopScreen() {
           />
         </View>
 
-        <View style={styles.row}>
-          <View style={[styles.formGroup, styles.rowItem]}>
-            <Text style={styles.label}>Selecionar Foto</Text>
-            <TextInput
-              value={imageUrl}
-              onChangeText={setImageUrl}
-              placeholder="Imagem de destaque"
-              style={styles.input}
-            />
-          </View>
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Foto/Logo</Text>
+          {imageUri? (
+            <TouchableOpacity onPress={() => setCameraOpen(true)}>
+              <Image source={{ uri: imageUri }} style={{ width: 100, height: 100, borderRadius: 12 }} />
+            </TouchableOpacity>) : (
+              <AddPhotoButton onPress={() => setCameraOpen(true)}/>
+            )}
         </View>
 
         <View style={styles.mapSection}>
@@ -217,7 +218,17 @@ export default function CreateBarbershopScreen() {
           <Text style={styles.submitButtonText}>Salvar estabelecimento</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <CameraModal
+        visible={cameraOpen}
+        onClose={() => setCameraOpen(false)}
+        onPhotoTaken={(uri) => {
+        setImageUri(uri);
+        setCameraOpen(false);
+        }}
+      />
     </SafeAreaView>
+
   );
 }
 
@@ -262,13 +273,6 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 120,
     textAlignVertical: 'top',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  rowItem: {
-    flex: 1,
   },
   mapSection: {
     gap: 8,

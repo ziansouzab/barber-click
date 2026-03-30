@@ -2,7 +2,7 @@ import { StyleSheet, View, FlatList, TextInput } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
-import { BarbershopCard } from '../../components/barbershopCard';
+import { BarbershopCard } from '../../components/BarbershopCard';
 import { useBarbershops } from '../../context/BarbershopContext';
 
 export default function HomeScreen() {
@@ -16,8 +16,7 @@ export default function HomeScreen() {
     const term = search.toLowerCase();
     return barbershops.filter(
       (b) =>
-        b.name?.toLowerCase().includes(term) ||
-        b.endereco?.toLowerCase().includes(term),
+        b.name?.toLowerCase().includes(term)
     );
   }, [search, barbershops]);
 
@@ -26,7 +25,7 @@ export default function HomeScreen() {
       name={item.name}
       rating={item.rating}
       endereco={item.endereco}
-      imageUrl={item.imageUrl}
+      imageUri={item.imageUri}
       onPress={() => router.push(`/business/${item.id}`)}
     />
   );
