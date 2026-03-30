@@ -1,13 +1,10 @@
 import {Text, StyleSheet, TouchableOpacity, View} from 'react-native';
-import { useState } from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 
 
 
 export function AddPhotoButton({ onPress, style}) {
-    const [cameraOpen, setCameraOpen] = useState(false);
-
     return (
         <View>
           <TouchableOpacity
