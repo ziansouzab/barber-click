@@ -5,7 +5,7 @@ Marketplace de barbearias com objetivo de permitir encontrar barbearias próxima
 - Usuario tipo cliente e tipo barbeiro;
 - Barbeiros podem adicionar estabelecimentos e produtos;
 - Clientes podem agendar horario nos estabelecimentos e avalia-los;
-- Usuario pode alterar foto de perfil;
+- Usuario pode alterar perfil;
 - Barbeiros tem uma agenda com horario e cliente que agendou;
 - Barbeiros possuem relatório financeiro simples contendo os cortes realizados em um determinado período;
 
