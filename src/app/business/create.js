@@ -60,7 +60,7 @@ export default function CreateBarbershopScreen() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
 
     if (!name.trim()) {
       alert('Preencha pelo menos o nome, bairro e cidade antes de salvar.');
@@ -81,7 +81,7 @@ export default function CreateBarbershopScreen() {
         latitude: location.latitude,
         longitude: location.longitude
       },
-      endereco: getAddressFromCoords(location.latitude, location.longitude)
+      endereco: await getAddressFromCoords(location.latitude, location.longitude)
     });
 
     alert('Estabelecimento cadastrado com sucesso!');
@@ -100,14 +100,15 @@ export default function CreateBarbershopScreen() {
         }
 
         const position = await Location.getCurrentPositionAsync();
+
         const coords = {
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
         }
         setLocation(coords)
         setMapRegion({
-          latitude: location.latitude,
-          longitude: location.longitude,
+          latitude: coords.latitude,
+          longitude: coords.longitude,
           latitudeDelta: 0.005,
           longitudeDelta: 0.005
         })
@@ -195,10 +196,10 @@ export default function CreateBarbershopScreen() {
               region={
                 !location?
                 {
-                  latitude: 0,
-                  longitude: 0,
-                  latitudeDelta: 0,
-                  longitudeDelta: 1000,
+                  latitude: -23.5505,
+                  longitude: -46.6333,
+                  latitudeDelta: 0.0922,
+                  longitudeDelta: 0.0421,
                 } :
                 mapRegion
               }
