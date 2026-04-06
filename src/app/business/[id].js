@@ -22,7 +22,6 @@ export default function BarbershopDetailScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
 
-  const [activeTab, setActiveTab] = useState('info');
   const [photos, setPhotos] = useState([]);
   const [cameraOpen, setCameraOpen] = useState(false);
   
@@ -46,7 +45,6 @@ export default function BarbershopDetailScreen() {
   const ratingLabel = hasRating ? shop.rating.toFixed(1) : 'Novo';
   const hasLocation = shop.location && shop.location.latitude && shop.location.longitude;
   const isOwner = user?.isBarber && user.id === shop.owner;
-  const photoSize = (width - 40 - 16) / 3;
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -69,24 +67,12 @@ export default function BarbershopDetailScreen() {
         </View>
 
         <View style={styles.tabBar}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'info' && styles.tabActive]}
-            onPress={() => setActiveTab('info')}
-          >
-            <Text style={[styles.tabText, activeTab === 'info' && styles.tabTextActive]}>Informacoes</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'photos' && styles.tabActive]}
-            onPress={() => setActiveTab('photos')}
-          >
-            <Text style={[styles.tabText, activeTab === 'photos' && styles.tabTextActive]}>Clientes Satisfeitos</Text>
-          </TouchableOpacity>
+            <Text style={styles.tabText}>Informações</Text>
         </View>
 
-        {activeTab === 'info' ? (
           <View>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Localizacao</Text>
+              <Text style={styles.sectionTitle}>Localização</Text>
               <View style={styles.locationRow}>
                 <FontAwesome name="map-marker" size={16} color="#0F9D58" />
                 <Text style={styles.locationText}>{shop.endereco}</Text>
@@ -121,30 +107,6 @@ export default function BarbershopDetailScreen() {
               </View>
             )}
           </View>
-        ) : (
-          <View style={styles.section}>
-            {photos.length === 0 && (
-              <Text style={styles.photosSubtitle}>Esse estabelecimento ainda não adicionou imagens.</Text>
-            )}
-
-            <View style={styles.photosGrid}>
-              {photos.map((uri, index) => (
-                <Image
-                  key={index}
-                  source={{ uri }}
-                  style={[styles.photoItem, { width: photoSize, height: photoSize }]}
-                  resizeMode="cover"
-                />
-              ))}
-              {isOwner && (
-                <AddPhotoButton 
-                  style={{ width: photoSize, height: photoSize}}
-                  onPress={() => setCameraOpen(true)}
-                />
-              )}
-            </View>
-          </View>
-        )}
       </ScrollView>
 
         <CameraModal
@@ -230,11 +192,12 @@ const styles = StyleSheet.create({
   },
   tabBar: {
     flexDirection: 'row',
+    alignSelf: 'flex-start',
     marginHorizontal: 20,
     marginTop: 20,
     borderRadius: 12,
     backgroundColor: '#F2F2F2',
-    padding: 4,
+    padding: 7,
   },
   tab: {
     flex: 1,
@@ -242,20 +205,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 10,
   },
-  tabActive: {
-    backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
   tabText: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#999',
-  },
-  tabTextActive: {
     color: '#1D1D1D',
   },
   section: {
