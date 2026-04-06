@@ -20,24 +20,20 @@ export default function BarbershopDetailScreen() {
   const { barbershops } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
-  const { width } = useWindowDimensions();
-
-  const [photos, setPhotos] = useState([]);
-  const [cameraOpen, setCameraOpen] = useState(false);
-  
+  const [showInfo, setShowInfo] = useState(false);
 
   const shop = barbershops.find((b) => b.id === id);
 
   if (!shop) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <View style={styles.centered}>
           <Text style={styles.notFoundText}>Estabelecimento nao encontrado.</Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
@@ -47,7 +43,7 @@ export default function BarbershopDetailScreen() {
   const isOwner = user?.isBarber && user.id === shop.owner;
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
       <Stack.Screen options={{ title: shop.name, headerShown: true }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Image
@@ -58,27 +54,34 @@ export default function BarbershopDetailScreen() {
 
         <View style={styles.header}>
           <Text style={styles.name}>{shop.name}</Text>
+          
           <View style={styles.metaRow}>
-            <FontAwesome name="star" size={16} color={hasRating ? '#F5A623' : '#B0B0B0'} />
+            <FontAwesome name="star" size={14} color={hasRating ? '#F5A623' : '#B0B0B0'} />
             <Text style={[styles.rating, !hasRating && styles.ratingNew]}>{ratingLabel}</Text>
-            <Text style={styles.separator}>|</Text>
-            <Text style={styles.metaText}>{shop.priceRange}</Text>
+            
+            <Text style={styles.separator}>•</Text>
+            
+            <FontAwesome name="map-marker" size={14} color="#0F9D58" />
+            <Text style={styles.locationText} numberOfLines={1}>{shop.endereco}</Text>
           </View>
         </View>
 
-        <View style={styles.tabBar}>
-            <Text style={styles.tabText}>Informações</Text>
-        </View>
+        <TouchableOpacity 
+          style={styles.tabBar} 
+          onPress={() => setShowInfo(!showInfo)}
+          activeOpacity={0.7}
+        >
+            <Text style={styles.tabText}>Mais Informações</Text>
+            <FontAwesome 
+              name={showInfo ? "chevron-up" : "chevron-down"} 
+              size={12} 
+              color="#1D1D1D" 
+              style={{ marginLeft: 8 }}
+            />
+        </TouchableOpacity>
 
-          <View>
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Localização</Text>
-              <View style={styles.locationRow}>
-                <FontAwesome name="map-marker" size={16} color="#0F9D58" />
-                <Text style={styles.locationText}>{shop.endereco}</Text>
-              </View>
-            </View>
-
+        {showInfo && (
+          <View style={styles.infoContent}>
             {shop.description ? (
               <View style={styles.section}>
                 <Text style={styles.sectionTitle}>Sobre</Text>
@@ -107,18 +110,14 @@ export default function BarbershopDetailScreen() {
               </View>
             )}
           </View>
+        )}
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Produtos</Text>
+          <Text style={{ color: '#999', marginTop: 10 }}>Lista de produtos em breve...</Text>
+        </View>
       </ScrollView>
-
-        <CameraModal
-            visible={cameraOpen}
-            onClose={() => setCameraOpen(false)}
-            onPhotoTaken={(uri) => {
-            setPhotos((prev) => [...prev, uri]);
-            setCameraOpen(false);
-          }}
-        />
-
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -126,12 +125,8 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    padding: 0,
-    margin: 0,
   },
   content: {
-    marginTop: 0,
-    paddingTop: 0,
     paddingBottom: 40,
   },
   centered: {
@@ -162,53 +157,63 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingTop: 20,
-    gap: 8,
   },
   name: {
     fontSize: 24,
     fontWeight: '700',
     color: '#1D1D1D',
+    marginBottom: 8,
   },
   metaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    backgroundColor: '#F8F8F8',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F0F0F0',
   },
   rating: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#F5A623',
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#333',
+    marginLeft: 4,
   },
   ratingNew: {
     color: '#6F6F6F',
   },
   separator: {
-    fontSize: 14,
+    marginHorizontal: 8,
     color: '#CCC',
+    fontSize: 14,
   },
   metaText: {
     fontSize: 14,
     color: '#666',
   },
+  locationText: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+    flex: 1,
+  },
   tabBar: {
     flexDirection: 'row',
     alignSelf: 'flex-start',
-    marginHorizontal: 20,
-    marginTop: 20,
+    alignItems: 'center',
+    marginLeft: 20,
+    marginTop: 25,
     borderRadius: 12,
     backgroundColor: '#F2F2F2',
-    padding: 7,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1D1D1D',
+  infoContent: {
+    backgroundColor: '#FAFAFA', 
+    paddingBottom: 10,
+    marginHorizontal: 20,
+    borderRadius: 12,
+    marginTop: 5,
   },
   section: {
     paddingHorizontal: 20,
@@ -220,15 +225,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#3C3C3C',
   },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  locationText: {
-    fontSize: 14,
-    color: '#5A5A5A',
-  },
   description: {
     fontSize: 14,
     color: '#5A5A5A',
@@ -237,24 +233,12 @@ const styles = StyleSheet.create({
   mapWrapper: {
     borderRadius: 16,
     overflow: 'hidden',
+    marginTop: 8,
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
   map: {
     width: '100%',
-    height: 200,
-  },
-  photosSubtitle: {
-    fontSize: 13,
-    color: '#888',
-  },
-  photosGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  photoItem: {
-    borderRadius: 12,
-    backgroundColor: '#E0E0E0',
+    height: 180,
   }
 });

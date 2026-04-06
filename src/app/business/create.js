@@ -123,7 +123,7 @@ export default function CreateBarbershopScreen() {
 
   if (!user?.isBarber) {
     return (
-      <SafeAreaView style={styles.safeArea}>
+      <View style={styles.safeArea}>
         <Stack.Screen options={{ title: 'Novo Estabelecimento', headerShown: true }} />
         <View style={styles.lockedContainer}>
           <Text style={styles.lockedTitle}>Acesso restrito</Text>
@@ -132,12 +132,12 @@ export default function CreateBarbershopScreen() {
             <Text style={styles.lockedButtonText}>Ir para login</Text>
           </TouchableOpacity>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <Stack.Screen options={{ title: 'Novo Estabelecimento', headerShown: true }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>Cadastrar novo estabelecimento</Text>
@@ -228,7 +228,7 @@ export default function CreateBarbershopScreen() {
         setCameraOpen(false);
         }}
       />
-    </SafeAreaView>
+    </View>
 
   );
 }
