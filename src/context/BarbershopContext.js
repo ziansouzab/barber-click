@@ -11,6 +11,7 @@ export function BarbershopProvider({ children }) {
       {
         id: String(Date.now()),
         rating: 0,
+        services: [],
         ...barbershop,
       },
     ]);
