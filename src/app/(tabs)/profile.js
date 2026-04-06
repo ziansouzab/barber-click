@@ -21,7 +21,7 @@ export default function ProfileScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.notLoggedText}>Voce nao esta logado.</Text>
+          <Text style={styles.notLoggedText}>Voce não esta logado.</Text>
           <TouchableOpacity style={styles.loginButton} onPress={() => router.replace('/(tabs)/auth')}>
             <Text style={styles.loginButtonText}>Ir para login</Text>
           </TouchableOpacity>

@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
-export function BarbershopCard({ name, rating, endereco, imageUrl, onPress }) {
+export function BarbershopCard({ name, rating, endereco, imageUri, onPress }) {
   const hasRating = typeof rating === 'number' && rating > 0;
   const ratingLabel = hasRating ? rating.toFixed(1) : 'Novo';
 
@@ -12,7 +12,7 @@ export function BarbershopCard({ name, rating, endereco, imageUrl, onPress }) {
       activeOpacity={0.8}
     >
       <Image 
-        source={{ uri: imageUrl }} 
+        source={{ uri: imageUri }} 
         style={styles.image} 
         resizeMode="cover"
       />

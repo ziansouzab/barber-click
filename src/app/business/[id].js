@@ -6,8 +6,9 @@ import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
-import { CameraModal } from '../../components/CameraModal';
 import { Stack } from 'expo-router';
+import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
+import { CameraModal } from '../../components/CameraModal';
 
 export const options = {
   headerShown: true,
@@ -24,6 +25,7 @@ export default function BarbershopDetailScreen() {
   const [activeTab, setActiveTab] = useState('info');
   const [photos, setPhotos] = useState([]);
   const [cameraOpen, setCameraOpen] = useState(false);
+  
 
   const shop = barbershops.find((b) => b.id === id);
 
@@ -51,7 +53,7 @@ export default function BarbershopDetailScreen() {
       <Stack.Screen options={{ title: shop.name, headerShown: true }} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <Image
-          source={typeof shop.imageUrl === 'number' ? shop.imageUrl : { uri: shop.imageUrl }}
+          source={typeof shop.imageUri === 'number' ? shop.imageUri : { uri: shop.imageUri }}
           style={styles.coverImage}
           resizeMode="cover"
         />
@@ -121,7 +123,10 @@ export default function BarbershopDetailScreen() {
           </View>
         ) : (
           <View style={styles.section}>
-            <Text style={styles.photosSubtitle}>Esse estabelecimento ainda não adicionou imagens.</Text>
+            {photos.length === 0 && (
+              <Text style={styles.photosSubtitle}>Esse estabelecimento ainda não adicionou imagens.</Text>
+            )}
+
             <View style={styles.photosGrid}>
               {photos.map((uri, index) => (
                 <Image
@@ -131,30 +136,26 @@ export default function BarbershopDetailScreen() {
                   resizeMode="cover"
                 />
               ))}
-
               {isOwner && (
-                <TouchableOpacity
-                  style={[styles.addPhotoButton, { width: photoSize, height: photoSize }]}
+                <AddPhotoButton 
+                  style={{ width: photoSize, height: photoSize}}
                   onPress={() => setCameraOpen(true)}
-                  activeOpacity={0.7}
-                >
-                  <FontAwesome name="plus" size={28} color="#0F9D58" />
-                  <Text style={styles.addPhotoText}>Adicionar</Text>
-                </TouchableOpacity>
+                />
               )}
             </View>
           </View>
         )}
       </ScrollView>
 
-      <CameraModal
-        visible={cameraOpen}
-        onClose={() => setCameraOpen(false)}
-        onPhotoTaken={(uri) => {
-          setPhotos((prev) => [...prev, uri]);
-          setCameraOpen(false);
-        }}
-      />
+        <CameraModal
+            visible={cameraOpen}
+            onClose={() => setCameraOpen(false)}
+            onPhotoTaken={(uri) => {
+            setPhotos((prev) => [...prev, uri]);
+            setCameraOpen(false);
+          }}
+        />
+
     </SafeAreaView>
   );
 }
@@ -163,8 +164,12 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
+    padding: 0,
+    margin: 0,
   },
   content: {
+    marginTop: 0,
+    paddingTop: 0,
     paddingBottom: 40,
   },
   centered: {
@@ -299,20 +304,5 @@ const styles = StyleSheet.create({
   photoItem: {
     borderRadius: 12,
     backgroundColor: '#E0E0E0',
-  },
-  addPhotoButton: {
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#D0D0D0',
-    borderStyle: 'dashed',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FAFAFA',
-    gap: 6,
-  },
-  addPhotoText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#0F9D58',
-  },
+  }
 });
