@@ -109,9 +109,24 @@ export default function BarbershopDetailScreen() {
                 </View>
               </View>
             )}
+
+            {shop.horarios && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Horário de funcionamento</Text>
+                {shop.horarios.map((item) => (
+                  <View key={item.dia} style={styles.horarioRow}>
+                    <Text style={styles.horarioDia}>{item.dia}</Text>
+                    <Text style={styles.horarioValor}>
+                      {item.aberto ? item.abertura + ' às ' + item.fechamento : 'Fechado'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
           </View>
         )}
-
+          
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Produtos</Text>
           <Text style={{ color: '#999', marginTop: 10 }}>Lista de produtos em breve...</Text>
