@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
 import { Stack } from 'expo-router';
-import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
-import { CameraModal } from '../../components/CameraModal';
+
 
 export const options = {
   headerShown: true,
