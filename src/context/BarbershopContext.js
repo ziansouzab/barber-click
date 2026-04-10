@@ -17,7 +17,15 @@ export function BarbershopProvider({ children }) {
     ]);
   };
 
-  const value = useMemo(() => ({ barbershops, addBarbershop }), [barbershops]);
+  const updateBarbershop = (id, updatedData) => {
+    setBarbershops((prev) => 
+      prev.map((barbershop) =>
+        barbershop.id === id ? {...barbershop, ...updatedData} : barbershop
+      )
+    )
+  }
+
+  const value = useMemo(() => ({ barbershops, addBarbershop, updateBarbershop }), [barbershops]);
 
   return (
     <BarbershopContext.Provider value={value}>
