@@ -1,14 +1,12 @@
 import { useState } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useBarbershops } from '../../context/BarbershopContext';
-import { useAuth } from '../../context/AuthContext';
+import { useBarbershops } from '../../../context/BarbershopContext';
+import { useAuth } from '../../../context/AuthContext';
 import { Stack } from 'expo-router';
-import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
-import { CameraModal } from '../../components/CameraModal';
+
 
 export const options = {
   headerShown: true,
@@ -52,6 +50,14 @@ export default function BarbershopDetailScreen() {
           resizeMode="cover"
         />
 
+        { isOwner && (
+          <TouchableOpacity style={styles.editButton} onPress={ () => router.push(`/business/${id}/update`)}>
+              <FontAwesome name="pencil" size={16} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.editButtonText}>Editar</Text>
+          </TouchableOpacity>
+        )}
+          
+
         <View style={styles.header}>
           <Text style={styles.name}>{shop.name}</Text>
           
@@ -62,7 +68,7 @@ export default function BarbershopDetailScreen() {
             <Text style={styles.separator}>•</Text>
             
             <FontAwesome name="map-marker" size={14} color="#0F9D58" />
-            <Text style={styles.locationText} numberOfLines={1}>{shop.endereco}</Text>
+            <Text style={styles.metaText} numberOfLines={1}> {shop.endereco}</Text>
           </View>
         </View>
 
@@ -109,9 +115,24 @@ export default function BarbershopDetailScreen() {
                 </View>
               </View>
             )}
+
+            {shop.horarios && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Horário de funcionamento</Text>
+                {shop.horarios.map((item) => (
+                  <View key={item.dia} style={styles.horarioRow}>
+                    <Text style={styles.horarioDia}>{item.dia}</Text>
+                    <Text style={styles.horarioValor}>
+                      {item.aberto ? item.abertura + ' às ' + item.fechamento : 'Fechado'}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
           </View>
         )}
-
+          
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Produtos</Text>
           <Text style={{ color: '#999', marginTop: 10 }}>Lista de produtos em breve...</Text>
@@ -240,5 +261,22 @@ const styles = StyleSheet.create({
   map: {
     width: '100%',
     height: 180,
-  }
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#111', 
+    padding: 10,
+    marginHorizontal: 20,
+    marginTop: 5,
+    borderRadius: 8,
+    elevation: 3,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
