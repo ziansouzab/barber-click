@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, KeyboardAvoidingView, Platform,} from "react-native";
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
 import { Stack } from 'expo-router';
@@ -26,8 +26,9 @@ export default function CreateBarbershopScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [imageUri, setImageUri] = useState(null);
 
-  const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})),
-  );
+  const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})));
+  const [mesmoHorario, setMesmoHorario] = useState(false);
+  const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -127,11 +128,13 @@ export default function CreateBarbershopScreen() {
   };
 
   const atualizarHorario = (index, campo, valor) => {
-    setHorarios((prev) => {
-      const novo = [...prev];
-      novo[index] = { ...novo[index], [campo]: valor };
+    setHorarios((prev) => {const novo = [...prev];  novo[index] = { ...novo[index], [campo]: valor };
       return novo;
     });
+  };
+
+  const aplicarHorarioGeral = (abertura, fechamento) => {
+    setHorarios((prev) => prev.map((dia) => ({...dia,  abertura, fechamento, aberto: true, })));
   };
 
   if (!user?.isBarber) {
@@ -154,154 +157,219 @@ export default function CreateBarbershopScreen() {
       <Stack.Screen
         options={{ title: "Novo Estabelecimento", headerShown: true }}
       />
-      <ScrollView
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
+
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 180 : 0}
       >
-        <Text style={styles.title}>Cadastrar novo estabelecimento</Text>
-        <Text style={styles.subtitle}>
-          Preencha as informações básicas e selecione o ponto exato no mapa.
-        </Text>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Nome fantasia</Text>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Ex: Barber Lounge"
-            style={styles.input}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Descrição curta</Text>
-          <TextInput
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Fale sobre o ambiente, especialidades, diferenciais..."
-            style={[styles.input, styles.textArea]}
-            multiline
-            numberOfLines={4}
-          />
-        </View>
-
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Foto/Logo</Text>
-          {imageUri ? (
-            <TouchableOpacity onPress={() => setCameraOpen(true)}>
-              <Image
-                source={{ uri: imageUri }}
-                style={{ width: 100, height: 100, borderRadius: 12 }}
-              />
-            </TouchableOpacity>
-          ) : (
-            <AddPhotoButton onPress={() => setCameraOpen(true)} />
-          )}
-        </View>
-
-        <View style={styles.mapSection}>
-          <View style={styles.mapHeader}>
-            <Text style={styles.label}>Localização no mapa</Text>
-            <TouchableOpacity
-              style={styles.mapRefresh}
-              onPress={handleUseCurrentLocation}
-            >
-              <Text style={styles.mapRefreshText}>Usar minha localização</Text>
-            </TouchableOpacity>
-          </View>
-          <Text
-            style={[
-              styles.mapHint,
-              hasPermissionIssue && styles.permissionWarning,
-            ]}
-          >
-            {locationMessage}
+        <ScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <Text style={styles.title}>Cadastrar novo estabelecimento</Text>
+          <Text style={styles.subtitle}>
+            Preencha as informações básicas e selecione o ponto exato no mapa.
           </Text>
 
-          <View style={styles.mapWrapper}>
-            {isLoadingLocation && (
-              <View style={styles.mapOverlay}>
-                <ActivityIndicator size="large" color="#0F9D58" />
-              </View>
-            )}
-
-            <MapView
-              style={styles.map}
-              region={
-                !location
-                  ? {
-                      latitude: -23.5505,
-                      longitude: -46.6333,
-                      latitudeDelta: 0.0922,
-                      longitudeDelta: 0.0421,
-                    }
-                  : mapRegion
-              }
-              onPress={(event) => {
-                setLocation(event.nativeEvent.coordinate);
-                setLocationMessage(
-                  "Ponto atualizado. Confirme o cadastro abaixo.",
-                );
-              }}
-            >
-              {location && location.latitude && (
-                <Marker coordinate={location} />
-              )}
-            </MapView>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Nome fantasia</Text>
+            <TextInput
+              value={name}
+              onChangeText={setName}
+              placeholder="Ex: Barber Lounge"
+              style={styles.input}
+            />
           </View>
-        </View>
 
-        <View style={styles.formGroup}>
-          <Text style={styles.label}>Horário de funcionamento</Text>
-          {horarios.map((item, index) => (
-            <View key={item.dia} style={styles.diaRow}>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Descrição curta</Text>
+            <TextInput
+              value={description}
+              onChangeText={setDescription}
+              placeholder="Fale sobre o ambiente, especialidades, diferenciais..."
+              style={[styles.input, styles.textArea]}
+              multiline
+              numberOfLines={4}
+            />
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Foto/Logo</Text>
+            {imageUri ? (
+              <TouchableOpacity onPress={() => setCameraOpen(true)}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={{ width: 100, height: 100, borderRadius: 12 }}
+                />
+              </TouchableOpacity>
+            ) : (
+              <AddPhotoButton onPress={() => setCameraOpen(true)} />
+            )}
+          </View>
+
+          <View style={styles.mapSection}>
+            <View style={styles.mapHeader}>
+              <Text style={styles.label}>Localização no mapa</Text>
+              <TouchableOpacity
+                style={styles.mapRefresh}
+                onPress={handleUseCurrentLocation}
+              >
+                <Text style={styles.mapRefreshText}>
+                  Usar minha localização
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <Text
+              style={[
+                styles.mapHint,
+                hasPermissionIssue && styles.permissionWarning,
+              ]}
+            >
+              {locationMessage}
+            </Text>
+
+            <View style={styles.mapWrapper}>
+              {isLoadingLocation && (
+                <View style={styles.mapOverlay}>
+                  <ActivityIndicator size="large" color="#0F9D58" />
+                </View>
+              )}
+
+              <MapView
+                style={styles.map}
+                region={
+                  !location
+                    ? {
+                        latitude: -23.5505,
+                        longitude: -46.6333,
+                        latitudeDelta: 0.0922,
+                        longitudeDelta: 0.0421,
+                      }
+                    : mapRegion
+                }
+                onPress={(event) => {
+                  setLocation(event.nativeEvent.coordinate);
+                  setLocationMessage(
+                    "Ponto atualizado. Confirme o cadastro abaixo.",
+                  );
+                }}
+              >
+                {location && location.latitude && (
+                  <Marker coordinate={location} />
+                )}
+              </MapView>
+            </View>
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Horário de funcionamento</Text>
+
+            <View style={styles.diaRow}>
               <TouchableOpacity
                 style={styles.diaToggle}
-                onPress={() => atualizarHorario(index, "aberto", !item.aberto)}
+                onPress={() => {
+                  setMesmoHorario(!mesmoHorario);
+                  if (!mesmoHorario)
+                    aplicarHorarioGeral(
+                      horarioGeral.abertura,
+                      horarioGeral.fechamento,
+                    );
+                }}
               >
                 <View
                   style={[
                     styles.toggleCircle,
-                    item.aberto && styles.toggleCircleAtivo,
+                    mesmoHorario && styles.toggleCircleAtivo,
                   ]}
                 />
-                <Text style={styles.diaNome}>{item.dia}</Text>
+                <Text style={styles.diaNome}>Semana toda</Text>
               </TouchableOpacity>
 
-              {item.aberto ? (
+              {mesmoHorario && (
                 <View style={styles.horariosInputs}>
                   <TextInput
                     style={styles.horarioInput}
-                    value={item.abertura}
-                    onChangeText={(v) => atualizarHorario(index, "abertura", v)}
+                    value={horarioGeral.abertura}
+                    onChangeText={(v) => {
+                      setHorarioGeral((prev) => ({ ...prev, abertura: v }));
+                      aplicarHorarioGeral(v, horarioGeral.fechamento);
+                    }}
                     placeholder="09:00"
                     maxLength={5}
                   />
                   <Text style={styles.horarioSep}>às</Text>
                   <TextInput
                     style={styles.horarioInput}
-                    value={item.fechamento}
-                    onChangeText={(v) =>
-                      atualizarHorario(index, "fechamento", v)
-                    }
+                    value={horarioGeral.fechamento}
+                    onChangeText={(v) => {
+                      setHorarioGeral((prev) => ({ ...prev, fechamento: v }));
+                      aplicarHorarioGeral(horarioGeral.abertura, v);
+                    }}
                     placeholder="18:00"
                     maxLength={5}
                   />
                 </View>
-              ) : (
-                <Text style={styles.fechadoText}>Fechado</Text>
               )}
             </View>
-          ))}
-        </View>
 
-        <TouchableOpacity style={styles.submitButton}
-          onPress={handleSubmit}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.submitButtonText}>Salvar estabelecimento</Text>
-        </TouchableOpacity>
-      </ScrollView>
+            {horarios.map((item, index) => (
+              <View key={item.dia} style={styles.diaRow}>
+                <TouchableOpacity
+                  style={styles.diaToggle}
+                  onPress={() =>
+                    atualizarHorario(index, "aberto", !item.aberto)
+                  }
+                >
+                  <View
+                    style={[
+                      styles.toggleCircle,
+                      item.aberto && styles.toggleCircleAtivo,
+                    ]}
+                  />
+                  <Text style={styles.diaNome}>{item.dia}</Text>
+                </TouchableOpacity>
+
+                {item.aberto ? (
+                  <View style={styles.horariosInputs}>
+                    <TextInput
+                      style={styles.horarioInput}
+                      value={item.abertura}
+                      onChangeText={(v) =>
+                        atualizarHorario(index, "abertura", v)
+                      }
+                      placeholder="09:00"
+                      maxLength={5}
+                    />
+                    <Text style={styles.horarioSep}>às</Text>
+                    <TextInput
+                      style={styles.horarioInput}
+                      value={item.fechamento}
+                      onChangeText={(v) =>
+                        atualizarHorario(index, "fechamento", v)
+                      }
+                      placeholder="18:00"
+                      maxLength={5}
+                    />
+                  </View>
+                ) : (
+                  <Text style={styles.fechadoText}>Fechado</Text>
+                )}
+              </View>
+            ))}
+          </View>
+
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.submitButtonText}>Salvar estabelecimento</Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <CameraModal
         visible={cameraOpen}
