@@ -3,8 +3,8 @@ import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowD
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { useBarbershops } from '../../context/BarbershopContext';
-import { useAuth } from '../../context/AuthContext';
+import { useBarbershops } from '../../../context/BarbershopContext';
+import { useAuth } from '../../../context/AuthContext';
 import { Stack } from 'expo-router';
 
 
@@ -57,6 +57,14 @@ export default function BarbershopDetailScreen() {
           resizeMode="cover"
         />
 
+        { isOwner && (
+          <TouchableOpacity style={styles.editButton} onPress={ () => router.push(`/business/${id}/update`)}>
+              <FontAwesome name="pencil" size={16} color="#FFF" style={{ marginRight: 8 }} />
+              <Text style={styles.editButtonText}>Editar</Text>
+          </TouchableOpacity>
+        )}
+          
+
         <View style={styles.header}>
           <Text style={styles.name}>{shop.name}</Text>
 
@@ -76,6 +84,7 @@ export default function BarbershopDetailScreen() {
             <Text style={styles.locationText} numberOfLines={1}>
               {shop.endereco}
             </Text>
+            <Text style={styles.metaText} numberOfLines={1}> {shop.endereco}</Text>
           </View>
         </View>
 
@@ -290,5 +299,22 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '700',
     fontSize: 16,
+  },
+    editButton: {
+    flexDirection: 'row',
+    alignSelf: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#111', 
+    padding: 10,
+    marginHorizontal: 20,
+    marginTop: 5,
+    borderRadius: 8,
+    elevation: 3,
+  },
+  editButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
