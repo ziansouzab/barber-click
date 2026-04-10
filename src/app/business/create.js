@@ -30,6 +30,12 @@ export default function CreateBarbershopScreen() {
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
 
+  const SERVICOS_PADRAO = ["Corte", "Barba", "Corte + Barba", "Corte + Barba + Sobrancelha", "Sobrancelha"];
+
+  const [servicos, setServicos] = useState(
+    SERVICOS_PADRAO.map((nome) => ({ nome, preco: "" })),
+  );
+
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
@@ -83,6 +89,7 @@ export default function CreateBarbershopScreen() {
       description: description.trim(),
       imageUri: imageUri,
       horarios,
+      servicos,
       location: {
         latitude: location.latitude,
         longitude: location.longitude
@@ -357,6 +364,25 @@ export default function CreateBarbershopScreen() {
                 ) : (
                   <Text style={styles.fechadoText}>Fechado</Text>
                 )}
+              </View>
+            ))}
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Serviços e Preços</Text>
+            {servicos.map((s, index) => (
+              <View key={s.nome} style={styles.diaRow}>
+                <Text style={styles.diaNome}>{s.nome}</Text>
+                <TextInput
+                  style={styles.horarioInput}
+                  placeholder="R$ 0,00"
+                  value={s.preco}
+                  onChangeText={(v) => {
+                    const novos = [...servicos];
+                    novos[index].preco = v;
+                    setServicos(novos);
+                  }}
+                />
               </View>
             ))}
           </View>

@@ -7,12 +7,14 @@ export default function TabLayout() {
   const { user } = useAuth();
 
   return (
-    <Tabs screenOptions={{ tabBarActiveTintColor: 'red', headerShown: false}}>
+    <Tabs screenOptions={{ tabBarActiveTintColor: "red", headerShown: false }}>
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="home" color={color} />,
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="home" color={color} />
+          ),
         }}
       />
 
@@ -20,8 +22,10 @@ export default function TabLayout() {
         name="business"
         options={{
           title: "Estabelecimentos",
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="suitcase" color={color} />,
-          href: user?.isBarber ? '/business': null
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="suitcase" color={color} />
+          ),
+          href: user?.isBarber ? "/business" : null,
         }}
       />
 
@@ -29,8 +33,10 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: "Perfil",
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />,
-          href: user? 'profile' : null,
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="user" color={color} />
+          ),
+          href: user ? "profile" : null,
         }}
       />
 
@@ -38,11 +44,35 @@ export default function TabLayout() {
         name="auth"
         options={{
           title: "Entrar / Cadastrar",
-          tabBarIcon: ({ color }) => <FontAwesome size={28} name="user" color={color} />,
-          href: !user ? '/auth': null
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="user" color={color} />
+          ),
+          href: !user ? "/auth" : null,
         }}
       />
 
+      <Tabs.Screen
+        name="appointments"
+        options={{
+          title: "Agendamentos",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="calendar" color={color} />
+          ),
+          href: user?.isBarber ? "/appointments" : null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="myappointments"
+        options={{
+          title: "Meus Pedidos",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="clock-o" color={color} />
+          ),
+          href: user && !user.isBarber ? "/myappointments" : null,
+        }}
+      />
+      
     </Tabs>
   );
 }
