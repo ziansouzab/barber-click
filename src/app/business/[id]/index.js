@@ -41,11 +41,18 @@ export default function BarbershopDetailScreen() {
   const isOwner = user?.isBarber && user.id === shop.owner;
 
   return (
-      <View style={styles.safeArea}>
+    <View style={styles.safeArea}>
       <Stack.Screen options={{ title: shop.name, headerShown: true }} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Image
-          source={typeof shop.imageUri === 'number' ? shop.imageUri : { uri: shop.imageUri }}
+          source={
+            typeof shop.imageUri === "number"
+              ? shop.imageUri
+              : { uri: shop.imageUri }
+          }
           style={styles.coverImage}
           resizeMode="cover"
         />
@@ -60,30 +67,39 @@ export default function BarbershopDetailScreen() {
 
         <View style={styles.header}>
           <Text style={styles.name}>{shop.name}</Text>
-          
+
           <View style={styles.metaRow}>
-            <FontAwesome name="star" size={14} color={hasRating ? '#F5A623' : '#B0B0B0'} />
-            <Text style={[styles.rating, !hasRating && styles.ratingNew]}>{ratingLabel}</Text>
-            
+            <FontAwesome
+              name="star"
+              size={14}
+              color={hasRating ? "#F5A623" : "#B0B0B0"}
+            />
+            <Text style={[styles.rating, !hasRating && styles.ratingNew]}>
+              {ratingLabel}
+            </Text>
+
             <Text style={styles.separator}>•</Text>
-            
+
             <FontAwesome name="map-marker" size={14} color="#0F9D58" />
+            <Text style={styles.locationText} numberOfLines={1}>
+              {shop.endereco}
+            </Text>
             <Text style={styles.metaText} numberOfLines={1}> {shop.endereco}</Text>
           </View>
         </View>
 
-        <TouchableOpacity 
-          style={styles.tabBar} 
+        <TouchableOpacity
+          style={styles.tabBar}
           onPress={() => setShowInfo(!showInfo)}
           activeOpacity={0.7}
         >
-            <Text style={styles.tabText}>Mais Informações</Text>
-            <FontAwesome 
-              name={showInfo ? "chevron-up" : "chevron-down"} 
-              size={12} 
-              color="#1D1D1D" 
-              style={{ marginLeft: 8 }}
-            />
+          <Text style={styles.tabText}>Mais Informações</Text>
+          <FontAwesome
+            name={showInfo ? "chevron-up" : "chevron-down"}
+            size={12}
+            color="#1D1D1D"
+            style={{ marginLeft: 8 }}
+          />
         </TouchableOpacity>
 
         {showInfo && (
@@ -118,25 +134,34 @@ export default function BarbershopDetailScreen() {
 
             {shop.horarios && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Horário de funcionamento</Text>
+                <Text style={styles.sectionTitle}>
+                  Horário de funcionamento
+                </Text>
                 {shop.horarios.map((item) => (
                   <View key={item.dia} style={styles.horarioRow}>
                     <Text style={styles.horarioDia}>{item.dia}</Text>
                     <Text style={styles.horarioValor}>
-                      {item.aberto ? item.abertura + ' às ' + item.fechamento : 'Fechado'}
+                      {item.aberto
+                        ? item.abertura + " às " + item.fechamento
+                        : "Fechado"}
                     </Text>
                   </View>
                 ))}
               </View>
             )}
-
           </View>
         )}
-          
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Produtos</Text>
-          <Text style={{ color: '#999', marginTop: 10 }}>Lista de produtos em breve...</Text>
-        </View>
+
+        {user && !user.isBarber && (
+          <TouchableOpacity
+            style={styles.agendarButton}
+            onPress={() => router.push(`/business/schedule/${id}`)}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.agendarButtonText}>Agendar horário</Text>
+          </TouchableOpacity>
+        )}
+
       </ScrollView>
     </View>
   );
@@ -262,7 +287,20 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 180,
   },
-  editButton: {
+  agendarButton: {
+    backgroundColor: '#ff2a00',
+    marginHorizontal: 20,
+    marginTop: 24,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  agendarButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+    editButton: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
     justifyContent: 'center',

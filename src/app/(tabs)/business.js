@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useMemo } from 'react';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
-import { BarbershopCard } from '../../components/BarbershopCard';
+import { BarbershopCard } from '../../components/barbershopCard';
 
 export default function BusinessTab() {
   const { barbershops } = useBarbershops();
