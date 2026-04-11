@@ -22,8 +22,12 @@ export function AppointmentProvider({ children }) {
     );
   };
 
+  const removeAppointment = (id) => {
+    setAppointments((prev) => prev.filter((a) => a.id !== id));
+  };
+
   const value = useMemo(
-    () => ({ appointments, addAppointment, updateStatus }),
+    () => ({ appointments, addAppointment, updateStatus, removeAppointment }),
     [appointments],
   );
 
