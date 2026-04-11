@@ -5,6 +5,7 @@ import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../../context/BarbershopContext';
 import { useAuth } from '../../../context/AuthContext';
+import { ProductModal } from '../../../components/ProductModal';
 import { Stack } from 'expo-router';
 
 
@@ -15,10 +16,13 @@ export const options = {
 
 export default function BarbershopDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { barbershops } = useBarbershops();
+  const { barbershops, addProduct, updateProduct, deleteProduct } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
+  const { width } = useWindowDimensions();
   const [showInfo, setShowInfo] = useState(false);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
 
   const shop = barbershops.find((b) => b.id === id);
 
@@ -39,6 +43,21 @@ export default function BarbershopDetailScreen() {
   const ratingLabel = hasRating ? shop.rating.toFixed(1) : 'Novo';
   const hasLocation = shop.location && shop.location.latitude && shop.location.longitude;
   const isOwner = user?.isBarber && user.id === shop.owner;
+  const photoSize = (width - 40 - 16) / 3;
+  const products = shop.products || [];
+
+  const openCreateProduct = () => { setEditingProduct(null); setProductModalOpen(true); };
+  const openEditProduct = (p) => { setEditingProduct(p); setProductModalOpen(true); };
+  const handleSaveProduct = (data) => {
+    if (editingProduct) { updateProduct(shop.id, editingProduct.id, data); }
+    else { addProduct(shop.id, data); }
+    setProductModalOpen(false);
+  };
+  const handleDeleteProduct = () => {
+    if (editingProduct) { deleteProduct(shop.id, editingProduct.id); }
+    setProductModalOpen(false);
+  };
+  const formatPrice = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
 
   return (
     <View style={styles.safeArea}>
@@ -162,7 +181,45 @@ export default function BarbershopDetailScreen() {
           </TouchableOpacity>
         )}
 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Produtos</Text>
+          {products.length === 0 && !isOwner && (
+            <Text style={{ color: '#999' }}>Esse estabelecimento ainda não adicionou produtos.</Text>
+          )}
+          <View style={styles.productsGrid}>
+            {products.map((product) => (
+              <TouchableOpacity
+                key={product.id}
+                style={[styles.productItem, { width: photoSize, height: photoSize }]}
+                onPress={() => isOwner && openEditProduct(product)}
+                activeOpacity={isOwner ? 0.7 : 1}
+              >
+                <Text style={styles.productName} numberOfLines={2}>{product.name}</Text>
+                <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
+              </TouchableOpacity>
+            ))}
+            {isOwner && (
+              <TouchableOpacity
+                style={[styles.addProductButton, { width: photoSize, height: photoSize }]}
+                onPress={openCreateProduct}
+                activeOpacity={0.7}
+              >
+                <FontAwesome name="plus" size={28} color="#0F9D58" />
+                <Text style={styles.addProductText}>Adicionar</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
       </ScrollView>
+
+      <ProductModal
+        visible={productModalOpen}
+        onClose={() => setProductModalOpen(false)}
+        onSave={handleSaveProduct}
+        onDelete={handleDeleteProduct}
+        product={editingProduct}
+      />
     </View>
   );
 }
@@ -300,7 +357,45 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 16,
   },
-    editButton: {
+  productsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  productItem: {
+    borderRadius: 12,
+    backgroundColor: '#F1F8F4',
+    borderWidth: 1,
+    borderColor: '#D3EAD9',
+    padding: 10,
+    justifyContent: 'space-between',
+  },
+  productName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#1D1D1D',
+  },
+  productPrice: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F9D58',
+  },
+  addProductButton: {
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#D0D0D0',
+    borderStyle: 'dashed',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FAFAFA',
+    gap: 6,
+  },
+  addProductText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#0F9D58',
+  },
+  editButton: {
     flexDirection: 'row',
     alignSelf: 'flex-end',
     justifyContent: 'center',
