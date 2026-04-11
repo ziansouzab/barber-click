@@ -33,7 +33,7 @@ export default function ScheduleScreen() {
     );
   }
 
-  const servicos = shop?.servicos ?? [];
+  const servicos = shop?.products ?? [];
   const duracaoAgendamento = Number(shop?.duracaoAgendamento);
 
   const proximasDatasDisponiveis = useMemo(() => {
@@ -174,20 +174,20 @@ export default function ScheduleScreen() {
             <View style={styles.opcoes}>
               {servicos.map((s) => (
                 <TouchableOpacity
-                  key={s.nome}
+                  key={s.name}
                   style={[
                     styles.opcao,
-                    servicoSelecionado === s.nome && styles.opcaoAtiva,
+                    servicoSelecionado === s.name && styles.opcaoAtiva,
                   ]}
-                  onPress={() => setServicoSelecionado(s.nome)}
+                  onPress={() => setServicoSelecionado(s.name)}
                 >
                   <Text
                     style={[
                       styles.opcaoText,
-                      servicoSelecionado === s.nome && styles.opcaoTextAtiva,
+                      servicoSelecionado === s.name && styles.opcaoTextAtiva,
                     ]}
                   >
-                    {s.nome}
+                    {s.name}
                   </Text>
                   <Text
                     style={[
@@ -195,7 +195,7 @@ export default function ScheduleScreen() {
                       servicoSelecionado === s.nome && styles.opcaoTextAtiva,
                     ]}
                   >
-                    {s.preco || "A consultar"}
+                    {s.price || "A consultar"}
                   </Text>
                 </TouchableOpacity>
               ))}
