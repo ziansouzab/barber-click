@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Alert} from "react-native";
+import { useState, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useBarbershops } from "../../../context/BarbershopContext";
@@ -12,50 +12,66 @@ import { KeyboardAvoidingView, Platform } from "react-native";
 export default function ScheduleScreen() {
   const { id } = useLocalSearchParams();
   const { barbershops } = useBarbershops();
-  const { addAppointment } = useAppointments();
+  const { appointments, addAppointment } = useAppointments();
   const { user } = useAuth();
   const router = useRouter();
-
-  const shop = barbershops.find((b) => b.id === id);
-
-  const SERVICOS = shop.servicos ?? [];
 
   const [servicoSelecionado, setServicoSelecionado] = useState(null);
   const [diaSelecionado, setDiaSelecionado] = useState(null);
   const [horario, setHorario] = useState("");
 
-  if (!shop) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centered}>
-          <Text style={styles.notFoundText}>Barbearia não encontrada.</Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backLink}>Voltar</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
+  const shop = barbershops.find((b) => b.id === id);
+  const servicos = shop.servicos ?? [];
   const diasAbertos = shop.horarios?.filter((d) => d.aberto) ?? [];
+  const duracaoAgendamento = Number(shop?.duracaoAgendamento);
 
-  const horarioValido = () => {
-    if (!diaSelecionado) return false;
-    const diaInfo = shop.horarios?.find((d) => d.dia === diaSelecionado);
-    if (!diaInfo) return false;
-
-    const toMin = (h) => {
-      const [hora, min] = h.split(":").map(Number);
-      return hora * 60 + min;
-    };
-
-    const entrada = toMin(horario);
-    const abertura = toMin(diaInfo.abertura);
-    const fechamento = toMin(diaInfo.fechamento);
-
-    return entrada >= abertura && entrada < fechamento;
+  const horarioParaMinutos = (horario) => {
+    const [hora, minuto] = horario.split(":").map(Number);
+    return hora * 60 + minuto;
   };
 
+  const minutosParaHorario = (minutos) => {
+    const hora = String(Math.floor(minutos / 60)).padStart(2, "0");
+    const minuto = String(minutos % 60).padStart(2, "0");
+    return `${hora}:${minuto}`;
+  };
+
+  const horariosDisponiveis = useMemo(() => {
+    if (!diaSelecionado) return [];
+
+    const diaInfo = shop.horarios?.find((d) => d.dia === diaSelecionado);
+    if (!diaInfo) return [];
+
+    const abertura = horarioParaMinutos(diaInfo.abertura);
+    const fechamento = horarioParaMinutos(diaInfo.fechamento);
+
+    const horariosBase = [];
+
+    for (
+      let minutoAtual = abertura;
+      minutoAtual +  duracaoAgendamento <= fechamento;
+      minutoAtual += duracaoAgendamento
+    ) {
+      horariosBase.push(minutosParaHorario(minutoAtual));
+    }
+
+    const ocupados = appointments
+      .filter(
+        (a) =>
+          a.shopId === shop.id &&
+          a.dia === diaSelecionado &&
+          a.status !== "cancelado"
+      )
+      .map((a) => a.horario);
+
+    return horariosBase.filter((horarioBase) => !ocupados.includes(horarioBase));
+  }, [diaSelecionado, shop, appointments, duracaoAgendamento]);
+
+  const handleSelecionarDia = (dia) => {
+    setDiaSelecionado(dia);
+    setHorario("");
+  }
+  
   const handleConfirmar = () => {
     if (!servicoSelecionado) {
       Alert.alert("Atenção", "Selecione um serviço.");
@@ -69,23 +85,42 @@ export default function ScheduleScreen() {
       Alert.alert("Atenção", "Digite o horário desejado.");
       return;
     }
-    if (!horarioValido()) {
-      const diaInfo = shop.horarios?.find((d) => d.dia === diaSelecionado);
+    if (!horariosDisponiveis.includes(horario)) {
       Alert.alert(
-        "Horário inválido",
-        `${shop.name} funciona das ${diaInfo.abertura} às ${diaInfo.fechamento} na ${diaSelecionado}.`,
-      );
+        "Horário indisponível",
+        "Esse horário não está disponivel. Por favor, tente outro horário."
+      )
       return;
     }
-
-    addAppointment({shopId: shop.id, shopName: shop.name, clienteId: user.id, clienteNome: user.name, servico: servicoSelecionado,
-     dia: diaSelecionado, horario});
-
+    
+    addAppointment({
+      shopId: shop.id,
+      shopName: shop.name,
+      clienteId: user.id,
+      clienteNome: user.name,
+      servico: servicoSelecionado,
+      dia: diaSelecionado, 
+      horario
+    });
+    
     Alert.alert("Agendamento enviado!", "Aguarde a confirmação do barbeiro.", [
       { text: "OK", onPress: () => router.replace(`/business/${id}`) },
     ]);
   };
 
+  if (!shop) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={styles.notFoundText}>Barbearia não encontrada.</Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backLink}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+  
   return (
     <SafeAreaView style={styles.safeArea}>
       <Stack.Screen options={{ title: "Agendar horário", headerShown: true }} />
@@ -103,7 +138,7 @@ export default function ScheduleScreen() {
           <View style={styles.section}>
             <Text style={styles.label}>Serviço</Text>
             <View style={styles.opcoes}>
-              {SERVICOS.map((s) => (
+              {servicos.map((s) => (
                 <TouchableOpacity
                   key={s.nome}
                   style={[
@@ -143,7 +178,7 @@ export default function ScheduleScreen() {
                     styles.opcao,
                     diaSelecionado === d.dia && styles.opcaoAtiva,
                   ]}
-                  onPress={() => setDiaSelecionado(d.dia)}
+                  onPress={() => handleSelecionarDia(d.dia)}
                 >
                   <Text
                     style={[
@@ -168,24 +203,45 @@ export default function ScheduleScreen() {
 
           <View style={styles.section}>
             <Text style={styles.label}>Horário desejado</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Ex: 10:00"
-              value={horario}
-              onChangeText={setHorario}
-              maxLength={5}
-              keyboardType="numbers-and-punctuation"
-            />
+            {!diaSelecionado ? (
+              <Text style={styles.dica}>Selecione um dia para ver os horários disponíveis.</Text>
+            ) : horariosDisponiveis.length === 0 ? (
+              <Text style={styles.dica}>Não há horários disponíveis para este dia.</Text>
+            ) : (
+              <View style={styles.opcoes}>
+                {horariosDisponiveis.map((h) => (
+                  <TouchableOpacity
+                    key={h}
+                    style={[
+                      styles.opcao,
+                      horario === h && styles.opcaoAtiva,
+                    ]}
+                    onPress={() => setHorario(h)}
+                  >
+                    <Text
+                      style={[
+                        styles.opcaoText,
+                        horario === h && styles.opcaoTextAtiva,
+                      ]}
+                    >
+                      {h}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            )}
+
             {diaSelecionado && (
-              <Text style={styles.dica}>
-                Funcionamento na {diaSelecionado}:{" "}
-                {shop.horarios?.find((d) => d.dia === diaSelecionado)?.abertura}{" "}
-                às{" "}
-                {
-                  shop.horarios?.find((d) => d.dia === diaSelecionado)
-                    ?.fechamento
-                }
-              </Text>
+              <View>
+                <Text style={styles.dica}>
+                  Funcionamento na {diaSelecionado}:{" "}
+                  {shop.horarios?.find((d) => d.dia === diaSelecionado)?.abertura} às{" "}
+                  {shop.horarios?.find((d) => d.dia === diaSelecionado)?.fechamento}
+                </Text>
+                <Text style={styles.dica}>
+                  Duração Média de Atendimento: {duracaoAgendamento} min
+                </Text>
+              </View>
             )}
           </View>
 

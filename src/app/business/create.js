@@ -29,6 +29,7 @@ export default function CreateBarbershopScreen() {
   const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})));
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState(30);
 
   const SERVICOS_PADRAO = ["Corte", "Barba", "Corte + Barba", "Corte + Barba + Sobrancelha", "Sobrancelha"];
 
@@ -90,6 +91,7 @@ export default function CreateBarbershopScreen() {
       imageUri: imageUri,
       horarios,
       servicos,
+      duracaoAgendamento,
       location: {
         latitude: location.latitude,
         longitude: location.longitude
@@ -385,6 +387,17 @@ export default function CreateBarbershopScreen() {
                 />
               </View>
             ))}
+          </View>
+
+          <View style={styles.formGroup}>
+             <Text style={styles.label}>Duração Média do Atendimento em Minutos</Text>
+             <TextInput
+              style={styles.horarioInput}
+              placeholder="30"
+              value={duracaoAgendamento}
+              keyboardType='numeric'
+              onChangeText={setDuracaoAgendamento}
+              /> 
           </View>
 
           <TouchableOpacity

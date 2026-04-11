@@ -28,6 +28,27 @@ export default function TabLayout() {
           href: user?.isBarber ? "/business" : null,
         }}
       />
+      <Tabs.Screen
+        name="appointments"
+        options={{
+          title: "Agendamentos",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="calendar" color={color} />
+          ),
+          href: user?.isBarber ? "/appointments" : null,
+        }}
+      />
+
+      <Tabs.Screen
+        name="myappointments"
+        options={{
+          title: "Meus Agendamentos",
+          tabBarIcon: ({ color }) => (
+            <FontAwesome size={28} name="clock-o" color={color} />
+          ),
+          href: user && !user.isBarber ? "/myappointments" : null,
+        }}
+      />
 
       <Tabs.Screen
         name="profile"
@@ -51,27 +72,6 @@ export default function TabLayout() {
         }}
       />
 
-      <Tabs.Screen
-        name="appointments"
-        options={{
-          title: "Agendamentos",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="calendar" color={color} />
-          ),
-          href: user?.isBarber ? "/appointments" : null,
-        }}
-      />
-
-      <Tabs.Screen
-        name="myappointments"
-        options={{
-          title: "Meus Pedidos",
-          tabBarIcon: ({ color }) => (
-            <FontAwesome size={28} name="clock-o" color={color} />
-          ),
-          href: user && !user.isBarber ? "/myappointments" : null,
-        }}
-      />
       
     </Tabs>
   );
