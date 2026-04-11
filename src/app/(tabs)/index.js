@@ -2,7 +2,7 @@ import { StyleSheet, View, FlatList, TextInput } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
-import { BarbershopCard } from '../../components/BarbershopCard';
+import { BarbershopCard } from '../../components/barbershopCard';
 import { useBarbershops } from '../../context/BarbershopContext';
 
 export default function HomeScreen() {
