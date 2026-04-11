@@ -2,12 +2,24 @@ import { View, Text, StyleSheet, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppointments } from "../../context/AppointmentContext";
 import { useAuth } from "../../context/AuthContext";
+import { formatarDataBR, obterNomeDia, horarioParaMinutos } from "../../utils/datas";
 
 export default function MyAppointmentsScreen() {
   const { appointments } = useAppointments();
   const { user } = useAuth();
 
-  const meusAgendamentos = appointments.filter((a) => a.clienteId === user?.id);
+  const meusAgendamentos = [...appointments]
+    .filter((a) => a.clienteId === user?.id)
+    .sort((a, b) => {
+      const dataA = a.data ?? "";
+      const dataB = b.data ?? "";
+
+      if (dataA !== dataB) {
+        return dataA.localeCompare(dataB);
+      }
+
+    return horarioParaMinutos(a.horario) - horarioParaMinutos(b.horario);
+  });
 
   const renderItem = ({ item }) => (
     <View style={styles.card}>
@@ -26,7 +38,7 @@ export default function MyAppointmentsScreen() {
 
       <Text style={styles.info}>Serviço: {item.servico}</Text>
       <Text style={styles.info}>
-        Dia: {item.dia} às {item.horario}
+        Data: {formatarDataBR(item.data)} • {obterNomeDia(item.data)} às {item.horario}
       </Text>
     </View>
   );
