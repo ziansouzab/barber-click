@@ -105,6 +105,13 @@ export default function Auth() {
 
   return (
     <View style={styles.container}>
+
+      <Image
+          source={"../../../assets/icon.png"}
+          style={styles.coverImage}
+          resizeMode="cover"
+      />
+
       <Text style={styles.title}>{isRegistering ? 'Criar Conta' : 'Fazer Login'}</Text>
 
       {isRegistering && (
@@ -258,4 +265,8 @@ const styles = StyleSheet.create({
     color: 'gray',
     fontSize: 14,
   },
-});
+  coverImage: {
+    width: '100%',
+    height: 220,
+  },
+  });
