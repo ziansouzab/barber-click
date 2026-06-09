@@ -30,7 +30,7 @@ export default function Auth() {
   }, [user, isProcessingLogin]);
 
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!email || !password || !name) {
       alert("Para cadastro, todos os campos devem estar preenchidos!");
       return;
@@ -38,7 +38,7 @@ export default function Auth() {
 
     const isBarber = selectedRole === 'barbeiro';
     
-    const success = register(email, password, name, isBarber);
+    const success = await register(email, password, name, isBarber);
 
     if (success) {
       setIsRegistering(false);
@@ -46,10 +46,10 @@ export default function Auth() {
     }
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setIsProcessingLogin(true);
 
-    const success = login(email, password);
+    const success = await login(email, password);
     if(success){
       if (!biometric && biometricSupport) {
         Alert.alert(
@@ -95,7 +95,7 @@ export default function Auth() {
     if (result.success) {
       const { email, password } = biometric;
 
-      const success = login(email, password);
+      const success = await login(email, password);
 
       if(success) {
         router.replace("/");
