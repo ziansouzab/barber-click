@@ -78,7 +78,7 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    addBarbershop({
+    await addBarbershop({
       name: name.trim(),
       owner: user.id,
       description: description.trim(),

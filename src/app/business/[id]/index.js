@@ -48,13 +48,13 @@ export default function BarbershopDetailScreen() {
 
   const openCreateProduct = () => { setEditingProduct(null); setProductModalOpen(true); };
   const openEditProduct = (p) => { setEditingProduct(p); setProductModalOpen(true); };
-  const handleSaveProduct = (data) => {
-    if (editingProduct) { updateProduct(shop.id, editingProduct.id, data); }
-    else { addProduct(shop.id, data); }
+  const handleSaveProduct = async (data) => {
+    if (editingProduct) { await updateProduct(shop.id, editingProduct.id, data); }
+    else { await addProduct(shop.id, data); }
     setProductModalOpen(false);
   };
-  const handleDeleteProduct = () => {
-    if (editingProduct) { deleteProduct(shop.id, editingProduct.id); }
+  const handleDeleteProduct = async () => {
+    if (editingProduct) { await deleteProduct(shop.id, editingProduct.id); }
     setProductModalOpen(false);
   };
   const formatPrice = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;

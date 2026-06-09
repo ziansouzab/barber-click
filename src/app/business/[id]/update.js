@@ -78,7 +78,7 @@ export default function UpdateBarbershopScreen() {
       return;
     }
 
-    updateBarbershop(id, {
+    await updateBarbershop(id, {
       name: name.trim(),
       description: description.trim(),
       imageUri: imageUri,
