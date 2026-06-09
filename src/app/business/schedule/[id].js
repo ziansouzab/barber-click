@@ -109,7 +109,7 @@ export default function ScheduleScreen() {
     setHorario("");
   };
 
-  const handleConfirmar = () => {
+  const handleConfirmar = async () => {
     if (!servicoSelecionado) {
       Alert.alert("Atenção", "Selecione um serviço.");
       return;
@@ -133,12 +133,12 @@ export default function ScheduleScreen() {
       return;
     }
 
-    const resultado = addAppointment({
+    const resultado = await addAppointment({
       shopId: shop.id,
-      shopName: shop.name,
       clienteId: user.id,
-      clienteNome: user.name,
-      servico: servicoSelecionado,
+      serviceId: servicoSelecionado.id,
+      servico: servicoSelecionado.name,
+      servicePrice: servicoSelecionado.price,
       data: dataSelecionada.data,
       horario,
       duracaoAgendamento,
@@ -174,17 +174,17 @@ export default function ScheduleScreen() {
             <View style={styles.opcoes}>
               {servicos.map((s) => (
                 <TouchableOpacity
-                  key={s.name}
+                  key={s.id}
                   style={[
                     styles.opcao,
-                    servicoSelecionado === s.name && styles.opcaoAtiva,
+                    servicoSelecionado?.id === s.id && styles.opcaoAtiva,
                   ]}
-                  onPress={() => setServicoSelecionado(s.name)}
+                  onPress={() => setServicoSelecionado(s)}
                 >
                   <Text
                     style={[
                       styles.opcaoText,
-                      servicoSelecionado === s.name && styles.opcaoTextAtiva,
+                      servicoSelecionado?.id === s.id && styles.opcaoTextAtiva,
                     ]}
                   >
                     {s.name}
@@ -192,10 +192,10 @@ export default function ScheduleScreen() {
                   <Text
                     style={[
                       styles.opcaoHorario,
-                      servicoSelecionado === s.nome && styles.opcaoTextAtiva,
+                      servicoSelecionado?.id === s.id && styles.opcaoTextAtiva,
                     ]}
                   >
-                    {s.price || "A consultar"}
+                    {s.price != null ? `R$ ${Number(s.price).toFixed(2).replace('.', ',')}` : 'A consultar'}
                   </Text>
                 </TouchableOpacity>
               ))}

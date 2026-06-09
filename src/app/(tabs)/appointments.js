@@ -123,7 +123,7 @@ export default function AppointmentsScreen() {
 
           <TouchableOpacity
             style={[styles.botao, styles.botaoRecusar]}
-            onPress={() => removeAppointment(item.id)}
+            onPress={() => updateStatus(item.id, "recusado")}
           >
             <Text style={styles.botaoText}>Recusar</Text>
           </TouchableOpacity>
