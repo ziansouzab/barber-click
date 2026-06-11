@@ -70,28 +70,34 @@ export function BarbershopProvider({ children }) {
   };
 
   const updateBarbershop = async (id, updatedData) => {
-    const patch = {
-      name: updatedData.name,
-      description: updatedData.description,
-      address: updatedData.endereco,
-      latitude: updatedData.location?.latitude,
-      longitude: updatedData.location?.longitude,
-    };
-
-    if (updatedData.imageUri && !updatedData.imageUri.startsWith('http')) {
-      const { path } = await uploadBarbershopImage(id, updatedData.imageUri);
-      patch.image_path = path;
-    }
-
-    await supabase.from('barbershops').update(patch).eq('id', id);
-
-    if (updatedData.horarios) {
-      await supabase.from('business_hours').delete().eq('barbershop_id', id);
-      await supabase.from('business_hours').insert(horariosParaRows(id, updatedData.horarios));
-    }
-
-    await fetchBarbershops();
+  const patch = {
+    name: updatedData.name,
+    description: updatedData.description,
+    address: updatedData.endereco,
+    latitude: updatedData.location?.latitude,
+    longitude: updatedData.location?.longitude,
   };
+
+  if (updatedData.imageUri && !updatedData.imageUri.startsWith('http')) {
+    const { data: currentBarber } = await supabase
+      .from('barbershops')
+      .select('image_path')
+      .eq('id', id)
+      .single();
+
+    if (currentBarber?.image_path) {
+      await supabase.storage
+        .from('barbershops')
+        .remove([currentBarber.image_path]);
+    }
+
+    const { path } = await uploadBarbershopImage(id, updatedData.imageUri);
+    patch.image_path = path;
+  }
+
+  await supabase.from('barbershops').update(patch).eq('id', id);
+  await fetchBarbershops();
+};
 
   const addProduct = async (barbershopId, product) => {
     await supabase
