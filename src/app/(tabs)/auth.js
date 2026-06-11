@@ -36,6 +36,17 @@ export default function Auth() {
       return;
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Por favor, digite um e-mail válido.");
+      return;
+    }
+
+    if (password.length < 6) {
+      alert("A senha deve ter no mínimo 6 caracteres.");
+      return;
+    }
+
     const isBarber = selectedRole === 'barbeiro';
     
     const success = await register(email, password, name, isBarber);
@@ -48,6 +59,17 @@ export default function Auth() {
 
   const handleLogin = async () => {
     setIsProcessingLogin(true);
+
+    if (!email || !password) {
+      alert("Por favor, preencha seu e-mail e senha para entrar.");
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert("Por favor, digite um e-mail válido.");
+      return;
+    }
 
     const success = await login(email, password);
     if(success){
