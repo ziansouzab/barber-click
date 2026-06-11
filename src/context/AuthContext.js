@@ -4,12 +4,33 @@ import { publicUrl, uploadAvatar } from '../lib/storage';
 
 export const AuthContext = createContext({});
 
+const translateAuthError = (message) => {
+  if (message.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.';
+  if (message.includes('User already registered')) return 'Este e-mail já está cadastrado.';
+  if (message.includes('Password should be at least')) return 'A senha deve ter no mínimo 6 caracteres.';
+  if (message.includes('rate limit')) return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
+  if (message.includes('Email not confirmed')) return 'Por favor, confirme seu e-mail antes de entrar.';
+  return 'Ocorreu um erro inesperado. Tente novamente.';
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [biometric, setBiometric] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadBiometrics = async () => {
+      try {
+        const savedBiometric = await AsyncStorage.getItem('@biometric_auth');
+        if (savedBiometric) {
+          setBiometric(JSON.parse(savedBiometric));
+        }
+      } catch (error) {
+        console.error("Erro ao carregar biometria:", error);
+      }
+    };
+    loadBiometrics();
+    
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) loadProfile(session.user);
       else setLoading(false);
@@ -52,7 +73,7 @@ export function AuthProvider({ children }) {
       options: { data: { name, is_barber: isBarber } },
     });
     if (error) {
-      alert(error.message);
+      alert(translateAuthError(error.message));
       return false;
     }
     alert('Cadastro realizado com sucesso!');
@@ -62,7 +83,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      alert('E-mail ou senha incorretos!');
+      alert(translateAuthError(error.message));
       return false;
     }
     return true;
@@ -74,8 +95,16 @@ export function AuthProvider({ children }) {
   };
 
   const linkBiometric = (email, password) => {
-    setBiometric({ email, password });
-    alert('Biometria vinculada com sucesso!');
+    const credentials = { email, password };
+    
+    try {
+      await AsyncStorage.setItem('@biometric_auth', JSON.stringify(credentials));
+      setBiometric(credentials);
+      alert('Biometrica vinculada com sucesso!');
+    } catch (error) {
+      console.error("Erro ao salvar biometria", error);
+      alert("Não foi possível cadastrar a biometria neste dispositivo!");
+    }
   };
 
   const updateAvatar = async (uri) => {
