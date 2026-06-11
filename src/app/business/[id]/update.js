@@ -160,7 +160,7 @@ export default function UpdateBarbershopScreen() {
         <Text style={styles.subtitle}>Modifique as informações do seu negócio abaixo.</Text>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Nome fantasia</Text>
+          <Text style={styles.label}>Nome do estabelecimento</Text>
           <TextInput
             value={name}
             onChangeText={setName}

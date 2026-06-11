@@ -87,9 +87,7 @@ export default function CreateBarbershopScreen() {
       imageUri: imageUri,
       horarios,
       duracaoAgendamento,
-      capacidadeAtendimento: multiploAtendimento
-        ? Number(capacidadeAtendimento)
-        : 1,
+      capacidadeAtendimento: multiploAtendimento ? Number(capacidadeAtendimento): 1,
       location: {
         latitude: location.latitude,
         longitude: location.longitude,
@@ -170,8 +168,8 @@ export default function CreateBarbershopScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 180 : 0}
+        behavior={Platform.OS === "ios" ? "position" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.content}
@@ -185,7 +183,7 @@ export default function CreateBarbershopScreen() {
           </Text>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Nome fantasia</Text>
+            <Text style={styles.label}>Nome do estabelecimento</Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -448,7 +446,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     gap: 16,
-    marginBottom: 20
+    
   },
   title: {
     fontSize: 24,
