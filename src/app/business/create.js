@@ -30,6 +30,8 @@ export default function CreateBarbershopScreen() {
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
   const [duracaoAgendamento, setDuracaoAgendamento] = useState(30);
+  const [multiploAtendimento, setMultiploAtendimento] = useState(false);
+  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState(2);
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -85,11 +87,17 @@ export default function CreateBarbershopScreen() {
       imageUri: imageUri,
       horarios,
       duracaoAgendamento,
+      capacidadeAtendimento: multiploAtendimento
+        ? Number(capacidadeAtendimento)
+        : 1,
       location: {
         latitude: location.latitude,
-        longitude: location.longitude
+        longitude: location.longitude,
       },
-      endereco: await getAddressFromCoords(location.latitude, location.longitude)
+      endereco: await getAddressFromCoords(
+        location.latitude,
+        location.longitude,
+      ),
     });
 
     alert('Estabelecimento cadastrado com sucesso!');
@@ -364,14 +372,49 @@ export default function CreateBarbershopScreen() {
           </View>
 
           <View style={styles.formGroup}>
-             <Text style={styles.label}>Duração Média do Atendimento em Minutos</Text>
-             <TextInput
+            <Text style={styles.label}>
+              Duração Média do Atendimento em Minutos
+            </Text>
+            <TextInput
               style={styles.horarioInput}
               placeholder="30"
               value={duracaoAgendamento}
-              keyboardType='numeric'
+              keyboardType="numeric"
               onChangeText={setDuracaoAgendamento}
-              /> 
+            />
+          </View>
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Múltiplos atendimentos simultâneos</Text>
+
+            <TouchableOpacity
+              style={styles.diaToggle}
+              onPress={() => setMultiploAtendimento(!multiploAtendimento)}
+            >
+              <View
+                style={[
+                  styles.toggleCircle,
+                  multiploAtendimento && styles.toggleCircleAtivo,
+                ]}
+              />
+              <Text style={styles.diaNome}>
+                {multiploAtendimento ? "Ativado" : "Desativado"}
+              </Text>
+            </TouchableOpacity>
+
+            {multiploAtendimento && (
+              <View style={{ marginTop: 8 }}>
+                <Text style={styles.label}>
+                  Número de atendimentos por horário
+                </Text>
+                <TextInput
+                  style={styles.horarioInput}
+                  placeholder="2"
+                  value={String(capacidadeAtendimento)}
+                  keyboardType="numeric"
+                  onChangeText={(v) => setCapacidadeAtendimento(v)}
+                />
+              </View>
+            )}
           </View>
 
           <TouchableOpacity

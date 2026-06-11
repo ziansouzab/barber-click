@@ -82,6 +82,8 @@ export default function ScheduleScreen() {
       horariosBase.push(minutosParaHorario(minutoAtual));
     }
 
+    const capacidade = Number(shop.capacidadeAtendimento) || 1;
+    
     const ocupados = appointments
       .filter(
         (a) =>
@@ -91,9 +93,9 @@ export default function ScheduleScreen() {
       .map((a) => a.horario);
 
   return horariosBase.filter((horarioBase) => {
-    const horarioOcupado = ocupados.includes(horarioBase);
+   const agendamentosNoHorario = ocupados.filter((h) => h === horarioBase).length;
 
-    if (horarioOcupado) return false;
+   if (agendamentosNoHorario >= capacidade) return false;
 
     if (isHoje(dataSelecionada.data)) {
       const minutosHorario = horarioParaMinutos(horarioBase);

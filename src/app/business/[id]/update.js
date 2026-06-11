@@ -30,6 +30,10 @@ export default function UpdateBarbershopScreen() {
   const [cameraOpen, setCameraOpen] = useState(false);
   const [imageUri, setImageUri] = useState(shop?.imageUri || null);
 
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState(shop?.duracaoAgendamento || 30,);
+  const [multiploAtendimento, setMultiploAtendimento] = useState(shop?.capacidadeAtendimento > 1,);
+  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState(shop?.capacidadeAtendimento || 2,);
+
   const [horarios, setHorarios] = useState(
     shop?.horarios || DIAS.map((dia) => ({ dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00" }))
   );
@@ -83,11 +87,13 @@ export default function UpdateBarbershopScreen() {
       description: description.trim(),
       imageUri: imageUri,
       horarios,
+      duracaoAgendamento,
+      capacidadeAtendimento: multiploAtendimento ? Number(capacidadeAtendimento): 1,
       location: {
         latitude: location.latitude,
-        longitude: location.longitude
+        longitude: location.longitude,
       },
-      endereco: await getAddressFromCoords(location.latitude, location.longitude)
+      endereco: await getAddressFromCoords(location.latitude, location.longitude,)
     });
 
     alert('Estabelecimento atualizado com sucesso!');
@@ -258,6 +264,46 @@ export default function UpdateBarbershopScreen() {
             </View>
           ))}
         </View>
+
+        <View style={styles.formGroup}>
+  <Text style={styles.label}>Duração Média do Atendimento em Minutos</Text>
+  <TextInput
+    style={styles.horarioInput}
+    placeholder="30"
+    value={String(duracaoAgendamento)}
+    keyboardType="numeric"
+    onChangeText={setDuracaoAgendamento}
+  />
+</View>
+
+<View style={styles.formGroup}>
+  <Text style={styles.label}>Múltiplos atendimentos simultâneos</Text>
+
+  <TouchableOpacity
+    style={styles.diaToggle}
+    onPress={() => setMultiploAtendimento(!multiploAtendimento)}
+  >
+    <View style={[styles.toggleCircle, multiploAtendimento && styles.toggleCircleAtivo]} />
+    <Text style={styles.diaNome}>
+      {multiploAtendimento ? 'Ativado' : 'Desativado'}
+    </Text>
+  </TouchableOpacity>
+
+  {multiploAtendimento && (
+    <View style={{ marginTop: 8 }}>
+      <Text style={styles.label}>Número de atendimentos por horário</Text>
+      <TextInput
+        style={styles.horarioInput}
+        placeholder="2"
+        value={String(capacidadeAtendimento)}
+        keyboardType="numeric"
+        onChangeText={(v) => setCapacidadeAtendimento(v)}
+      />
+    </View>
+  )}
+</View>
+
+<TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.85}></TouchableOpacity>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.85}>
           <Text style={styles.submitButtonText}>Salvar alterações</Text>
