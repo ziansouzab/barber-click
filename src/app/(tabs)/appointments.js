@@ -4,12 +4,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppointments } from "../../context/AppointmentContext";
 import { useAuth } from "../../context/AuthContext";
 import { useBarbershops } from "../../context/BarbershopContext";
-import { horarioParaMinutos, formatarDataBR, obterNomeDia, obterNomeDiaCurto, formatarDataCurta, formatarDataISO } from "../../utils/datas";
+import { horarioParaMinutos, formatarDataBR, obterNomeDia, obterNomeDiaCurto, formatarDataCurta, formatarDataISO, temAntecedenciaMinima } from "../../utils/datas";
 import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 
 
 export default function AppointmentsScreen() {
-  const { appointments, updateStatus, refetch: refetchAppointments } = useAppointments();
+  const { appointments, updateStatus, cancelAppointment, refetch: refetchAppointments } = useAppointments();
   const { user } = useAuth();
   const { barbershops, refetch: refetchBarbershops } = useBarbershops();
   const { refreshing, onRefresh } = usePullToRefresh(() => Promise.all([refetchAppointments(), refetchBarbershops()]));
@@ -103,6 +103,29 @@ export default function AppointmentsScreen() {
     }
   };
 
+  const handleCancelAppointment = (item) => {
+    Alert.alert(
+      "Cancelar agendamento",
+      "Deseja cancelar este agendamento? A vaga ficará disponível novamente.",
+      [
+        { text: "Voltar", style: "cancel" },
+        {
+          text: "Cancelar agendamento",
+          style: "destructive",
+          onPress: async () => {
+            if (updatingId) return;
+            setUpdatingId(item.id);
+            const result = await cancelAppointment(item.id);
+            setUpdatingId(null);
+            if (!result.success) {
+              Alert.alert("Não foi possível cancelar", result.message);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   const renderAppointmentCard = (item, isPendingSection = false) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -144,6 +167,17 @@ export default function AppointmentsScreen() {
           </TouchableOpacity>
         </View>
       )}
+
+      {item.status === "aprovado" &&
+        temAntecedenciaMinima(item.data, item.horario) && (
+          <TouchableOpacity
+            style={[styles.botao, styles.botaoCancelar]}
+            onPress={() => handleCancelAppointment(item)}
+            disabled={updatingId === item.id}
+          >
+            <Text style={styles.botaoText}>Cancelar agendamento</Text>
+          </TouchableOpacity>
+        )}
 
       {isPendingSection && (
         <Text style={styles.pendingHint}>
@@ -407,6 +441,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#0F9D58",
   },
   botaoRecusar: {
+    backgroundColor: "#C0392B",
+  },
+  botaoCancelar: {
+    marginTop: 10,
     backgroundColor: "#C0392B",
   },
   botaoText: {
