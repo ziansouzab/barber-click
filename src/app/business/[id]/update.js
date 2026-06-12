@@ -33,6 +33,12 @@ export default function UpdateBarbershopScreen() {
   const [horarios, setHorarios] = useState(
     shop?.horarios || DIAS.map((dia) => ({ dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00" }))
   );
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState(
+    String(shop?.duracaoAgendamento ?? 30),
+  );
+  const [appointmentCapacity, setAppointmentCapacity] = useState(
+    String(shop?.appointmentCapacity ?? 1),
+  );
 
   const [location, setLocation] = useState(shop?.location || null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -78,11 +84,19 @@ export default function UpdateBarbershopScreen() {
       return;
     }
 
+    const parsedCapacity = Number(appointmentCapacity);
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+      alert('A capacidade por horário deve ser um número inteiro maior ou igual a 1.');
+      return;
+    }
+
     const result = await updateBarbershop(id, {
       name: name.trim(),
       description: description.trim(),
       imageUri: imageUri,
       horarios,
+      duracaoAgendamento,
+      appointmentCapacity: parsedCapacity,
       location: {
         latitude: location.latitude,
         longitude: location.longitude
@@ -267,6 +281,31 @@ export default function UpdateBarbershopScreen() {
               )}
             </View>
           ))}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Duração média do atendimento em minutos</Text>
+          <TextInput
+            style={styles.horarioInput}
+            placeholder="30"
+            value={duracaoAgendamento}
+            keyboardType="numeric"
+            onChangeText={setDuracaoAgendamento}
+          />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Capacidade de atendimentos por horário</Text>
+          <TextInput
+            style={styles.horarioInput}
+            placeholder="1"
+            value={appointmentCapacity}
+            keyboardType="numeric"
+            onChangeText={setAppointmentCapacity}
+          />
+          <Text style={styles.mapHint}>
+            Quantos clientes podem iniciar atendimento no mesmo horário.
+          </Text>
         </View>
 
         <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} activeOpacity={0.85}>

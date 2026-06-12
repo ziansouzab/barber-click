@@ -29,7 +29,8 @@ export default function CreateBarbershopScreen() {
   const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})));
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
-  const [duracaoAgendamento, setDuracaoAgendamento] = useState(30);
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState('30');
+  const [appointmentCapacity, setAppointmentCapacity] = useState('1');
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -78,6 +79,12 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
+    const parsedCapacity = Number(appointmentCapacity);
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+      alert('A capacidade por horário deve ser um número inteiro maior ou igual a 1.');
+      return;
+    }
+
     const result = await addBarbershop({
       name: name.trim(),
       owner: user.id,
@@ -85,6 +92,7 @@ export default function CreateBarbershopScreen() {
       imageUri: imageUri,
       horarios,
       duracaoAgendamento,
+      appointmentCapacity: parsedCapacity,
       location: {
         latitude: location.latitude,
         longitude: location.longitude
@@ -383,6 +391,20 @@ export default function CreateBarbershopScreen() {
               keyboardType='numeric'
               onChangeText={setDuracaoAgendamento}
               /> 
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Capacidade de atendimentos por horário</Text>
+            <TextInput
+              style={styles.horarioInput}
+              placeholder="1"
+              value={appointmentCapacity}
+              keyboardType="numeric"
+              onChangeText={setAppointmentCapacity}
+            />
+            <Text style={styles.mapHint}>
+              Quantos clientes podem iniciar atendimento no mesmo horário.
+            </Text>
           </View>
 
           <TouchableOpacity

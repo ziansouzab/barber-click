@@ -19,6 +19,19 @@ function mapAppointment(row) {
   };
 }
 
+const BOOKING_ERROR_MESSAGES = {
+  'This time has reached its appointment capacity.':
+    'Esse horário acabou de atingir a capacidade. Escolha outro.',
+  'The barbershop is closed at this time.':
+    'A barbearia não atende nesse horário.',
+  'Choose a future date and time.':
+    'Escolha uma data e um horário futuros.',
+  'Invalid service for this barbershop.':
+    'O serviço selecionado não pertence a esta barbearia.',
+  'Authentication is required to book an appointment.':
+    'Entre na sua conta para realizar o agendamento.',
+};
+
 export function AppointmentProvider({ children }) {
   const [appointments, setAppointments] = useState([]);
   const { user } = useAuth();
@@ -43,21 +56,17 @@ export function AppointmentProvider({ children }) {
   }, [user]);
 
   const addAppointment = async (appointment) => {
-    const { error } = await supabase.from('appointments').insert({
-      barbershop_id: appointment.shopId,
-      customer_id: appointment.clienteId,
-      service_id: appointment.serviceId ?? null,
-      service_name: appointment.servico,
-      service_price: appointment.servicePrice ?? null,
-      date: appointment.data,
-      time: appointment.horario,
-      duration_minutes: Number(appointment.duracaoAgendamento) || 30,
+    const { error } = await supabase.rpc('book_appointment', {
+      p_barbershop_id: appointment.shopId,
+      p_service_id: appointment.serviceId,
+      p_date: appointment.data,
+      p_time: appointment.horario,
     });
     if (error) {
-      if (error.code === '23505') {
-        return { success: false, message: 'Esse horário acabou de ser reservado. Escolha outro.' };
-      }
-      return { success: false, message: error.message };
+      return {
+        success: false,
+        message: BOOKING_ERROR_MESSAGES[error.message] ?? error.message,
+      };
     }
     await fetchAppointments();
     return { success: true };
@@ -74,8 +83,14 @@ export function AppointmentProvider({ children }) {
   };
 
   const value = useMemo(
-    () => ({ appointments, addAppointment, updateStatus, removeAppointment, refetch: fetchAppointments }),
-    [appointments]
+    () => ({
+      appointments,
+      addAppointment,
+      updateStatus,
+      removeAppointment,
+      refetch: fetchAppointments,
+    }),
+    [appointments],
   );
 
   return <AppointmentContext.Provider value={value}>{children}</AppointmentContext.Provider>;

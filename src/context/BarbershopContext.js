@@ -14,6 +14,7 @@ function mapBarbershop(row) {
     endereco: row.address,
     imageUri: publicUrl('barbershops', row.image_path),
     duracaoAgendamento: row.duration_minutes,
+    appointmentCapacity: row.appointment_capacity ?? 1,
     rating: row.rating,
     location:
       row.latitude != null ? { latitude: row.latitude, longitude: row.longitude } : null,
@@ -50,6 +51,7 @@ export function BarbershopProvider({ children }) {
         description: barbershop.description,
         address: barbershop.endereco,
         duration_minutes: Number(barbershop.duracaoAgendamento) || 30,
+        appointment_capacity: Math.max(1, Number(barbershop.appointmentCapacity) || 1),
         latitude: barbershop.location?.latitude,
         longitude: barbershop.location?.longitude,
       })
@@ -94,6 +96,8 @@ export function BarbershopProvider({ children }) {
       address: updatedData.endereco,
       latitude: updatedData.location?.latitude,
       longitude: updatedData.location?.longitude,
+      duration_minutes: Number(updatedData.duracaoAgendamento) || 30,
+      appointment_capacity: Math.max(1, Number(updatedData.appointmentCapacity) || 1),
     };
 
     if (updatedData.imageUri && !updatedData.imageUri.startsWith('http')) {
