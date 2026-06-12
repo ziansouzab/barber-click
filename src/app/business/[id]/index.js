@@ -7,6 +7,7 @@ import { useBarbershops } from '../../../context/BarbershopContext';
 import { useAuth } from '../../../context/AuthContext';
 import { ProductModal } from '../../../components/ProductModal';
 import { Stack } from 'expo-router';
+import { DEFAULT_BARBERSHOP_IMAGE } from '../../../constants/images';
 
 
 export const options = {
@@ -113,7 +114,9 @@ export default function BarbershopDetailScreen() {
           source={
             typeof shop.imageUri === "number"
               ? shop.imageUri
-              : { uri: shop.imageUri }
+              : shop.imageUri
+                ? { uri: shop.imageUri }
+                : DEFAULT_BARBERSHOP_IMAGE
           }
           style={styles.coverImage}
           resizeMode="cover"
@@ -146,7 +149,6 @@ export default function BarbershopDetailScreen() {
             <Text style={styles.locationText} numberOfLines={1}>
               {shop.endereco}
             </Text>
-            <Text style={styles.metaText} numberOfLines={1}> {shop.endereco}</Text>
           </View>
         </View>
 

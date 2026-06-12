@@ -25,3 +25,9 @@ export async function uploadBarbershopImage(barbershopId, uri) {
 export async function uploadAvatar(userId, uri) {
   return uploadImage('avatars', `${userId}/${Date.now()}.jpg`, uri);
 }
+
+export async function removeStoredImage(bucket, path) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
+}

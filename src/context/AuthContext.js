@@ -2,7 +2,7 @@ import { createContext, useState, useContext, useEffect, useCallback } from 'rea
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { supabase } from '../lib/supabase';
-import { publicUrl, uploadAvatar } from '../lib/storage';
+import { publicUrl, removeStoredImage, uploadAvatar } from '../lib/storage';
 import {
   clearBiometricUserId,
   getBiometricUserId,
@@ -211,13 +211,29 @@ export function AuthProvider({ children }) {
   const updateAvatar = async (uri) => {
     if (!user) return { success: false, message: 'Usuário não autenticado.' };
     try {
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', user.id)
+        .single();
+      if (profileError) return { success: false, message: profileError.message };
+
       const { path } = await uploadAvatar(user.id, uri);
       const { error } = await supabase
         .from('profiles')
         .update({ avatar_url: path })
         .eq('id', user.id);
-      if (error) return { success: false, message: error.message };
+      if (error) {
+        await removeStoredImage('avatars', path).catch(console.error);
+        return { success: false, message: error.message };
+      }
+
       setUser((prev) => ({ ...prev, avatarUrl: publicUrl('avatars', path) }));
+      if (profile?.avatar_url) {
+        await removeStoredImage('avatars', profile.avatar_url).catch((cleanupError) => {
+          console.error('Erro ao remover avatar anterior:', cleanupError);
+        });
+      }
       return { success: true };
     } catch (error) {
       return { success: false, message: error.message };

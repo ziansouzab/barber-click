@@ -105,8 +105,11 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    if (!result.hoursSaved) {
-      alert(`Barbearia criada, mas não foi possível salvar os horários: ${result.message}`);
+    const warnings = [];
+    if (!result.hoursSaved) warnings.push(`horários: ${result.message}`);
+    if (!result.imageSaved) warnings.push(`imagem: ${result.imageMessage}`);
+    if (warnings.length) {
+      alert(`Barbearia criada, mas houve falha ao salvar ${warnings.join(' | ')}`);
       router.replace('/(tabs)/business');
       return;
     }
