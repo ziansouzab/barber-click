@@ -2,7 +2,7 @@ import {StyleSheet, View, FlatList, TextInput, Image, Text} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
-import { BarbershopCard } from '../../components/barbershopCard';
+import { BarbershopCard } from '../../components/BarbershopCard'
 import { useBarbershops } from '../../context/BarbershopContext';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -37,7 +37,7 @@ export default function HomeScreen() {
       <View style={styles.container}>
         <View style={styles.header}>
           <Image
-            source={require("../../../assets/splash-icon.png")}
+            source={require("../../../assets/icon.png")}
             style={styles.logo}
             resizeMode="contain"
           />

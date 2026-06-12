@@ -1,4 +1,4 @@
-import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View, Image } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -118,6 +118,15 @@ export default function Auth() {
 
   return (
     <View style={styles.container}>
+
+      <View style={styles.header}>
+        <Image
+          source={require("../../../assets/icon.png")}
+          style={styles.logo}
+          resizeMode="contain"
+        />
+      </View>
+
       <Text style={styles.title}>{isRegistering ? 'Criar Conta' : 'Fazer Login'}</Text>
 
       {isRegistering && (
@@ -273,5 +282,19 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     color: 'gray',
     fontSize: 14,
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  logo: {
+    width: 90,
+    height: 90,
+    borderRadius: 10,
   },
 });
