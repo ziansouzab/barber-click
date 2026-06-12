@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform,} from "react-native";
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform,} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useBarbershops } from "../../../context/BarbershopContext";
@@ -9,32 +9,29 @@ import { horarioParaMinutos, minutosParaHorario, formatarDataISO, formatarDataBR
 
 export default function ScheduleScreen() {
   const { id } = useLocalSearchParams();
-  const { barbershops } = useBarbershops();
-  const { appointments, addAppointment } = useAppointments();
+  const {
+    barbershops,
+    loading: barbershopsLoading,
+    error: barbershopsError,
+  } = useBarbershops();
+  const {
+    appointments,
+    loading: appointmentsLoading,
+    addAppointment,
+  } = useAppointments();
   const { user } = useAuth();
   const router = useRouter();
 
   const [servicoSelecionado, setServicoSelecionado] = useState(null);
   const [dataSelecionada, setDataSelecionada] = useState(null);
   const [horario, setHorario] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const shop = barbershops.find((b) => String(b.id) === String(id));
 
-  if (!shop) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centered}>
-          <Text style={styles.notFoundText}>Barbearia não encontrada.</Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text style={styles.backLink}>Voltar</Text>
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
   const servicos = shop?.products ?? [];
-  const duracaoAgendamento = Number(shop?.duracaoAgendamento);
+  const duracaoAgendamento = Number(shop?.duracaoAgendamento) || 30;
+  const appointmentCapacity = Math.max(1, Number(shop?.appointmentCapacity) || 1);
 
   const proximasDatasDisponiveis = useMemo(() => {
     if (!shop?.horarios?.length) return [];
@@ -82,16 +79,21 @@ export default function ScheduleScreen() {
       horariosBase.push(minutosParaHorario(minutoAtual));
     }
 
-    const ocupados = appointments
+    const ocupacaoPorHorario = appointments
       .filter(
         (a) =>
           String(a.shopId) === String(shop.id) &&
-          a.data === dataSelecionada.data
+          a.data === dataSelecionada.data &&
+          (a.status === 'pendente' || a.status === 'aprovado'),
       )
-      .map((a) => a.horario);
+      .reduce((ocupacao, appointment) => {
+        ocupacao[appointment.horario] = (ocupacao[appointment.horario] ?? 0) + 1;
+        return ocupacao;
+      }, {});
 
   return horariosBase.filter((horarioBase) => {
-    const horarioOcupado = ocupados.includes(horarioBase);
+    const horarioOcupado =
+      (ocupacaoPorHorario[horarioBase] ?? 0) >= appointmentCapacity;
 
     if (horarioOcupado) return false;
 
@@ -102,14 +104,54 @@ export default function ScheduleScreen() {
 
     return true;
 });
-  }, [appointments, dataSelecionada, duracaoAgendamento, shop]);
+  }, [
+    appointmentCapacity,
+    appointments,
+    dataSelecionada,
+    duracaoAgendamento,
+    shop,
+  ]);
+
+  if (barbershopsLoading || appointmentsLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#ff2a00" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!shop) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <Text style={styles.notFoundText}>
+            {barbershopsError
+              ? `Não foi possível carregar: ${barbershopsError}`
+              : 'Barbearia não encontrada.'}
+          </Text>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={styles.backLink}>Voltar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const handleSelecionarData = (dataInfo) => {
     setDataSelecionada(dataInfo);
     setHorario("");
   };
 
-  const handleConfirmar = () => {
+  const handleConfirmar = async () => {
+    if (isSubmitting) return;
+
+    if (!user) {
+      Alert.alert("Atenção", "Entre na sua conta para realizar o agendamento.");
+      return;
+    }
+
     if (!servicoSelecionado) {
       Alert.alert("Atenção", "Selecione um serviço.");
       return;
@@ -133,25 +175,26 @@ export default function ScheduleScreen() {
       return;
     }
 
-    const resultado = addAppointment({
-      shopId: shop.id,
-      shopName: shop.name,
-      clienteId: user.id,
-      clienteNome: user.name,
-      servico: servicoSelecionado,
-      data: dataSelecionada.data,
-      horario,
-      duracaoAgendamento,
-    });
+    setIsSubmitting(true);
+    try {
+      const resultado = await addAppointment({
+        shopId: shop.id,
+        serviceId: servicoSelecionado.id,
+        data: dataSelecionada.data,
+        horario,
+      });
 
-    if (resultado && resultado.success === false) {
-      Alert.alert("Não foi possível agendar", resultado.message);
-      return;
+      if (resultado?.success === false) {
+        Alert.alert("Não foi possível agendar", resultado.message);
+        return;
+      }
+
+      Alert.alert("Agendamento enviado!", "Aguarde a confirmação do barbeiro.", [
+        { text: "OK", onPress: () => router.replace(`/business/${id}`) },
+      ]);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    Alert.alert("Agendamento enviado!", "Aguarde a confirmação do barbeiro.", [
-      { text: "OK", onPress: () => router.replace(`/business/${id}`) },
-    ]);
   };
 
   return (
@@ -174,17 +217,17 @@ export default function ScheduleScreen() {
             <View style={styles.opcoes}>
               {servicos.map((s) => (
                 <TouchableOpacity
-                  key={s.name}
+                  key={s.id}
                   style={[
                     styles.opcao,
-                    servicoSelecionado === s.name && styles.opcaoAtiva,
+                    servicoSelecionado?.id === s.id && styles.opcaoAtiva,
                   ]}
-                  onPress={() => setServicoSelecionado(s.name)}
+                  onPress={() => setServicoSelecionado(s)}
                 >
                   <Text
                     style={[
                       styles.opcaoText,
-                      servicoSelecionado === s.name && styles.opcaoTextAtiva,
+                      servicoSelecionado?.id === s.id && styles.opcaoTextAtiva,
                     ]}
                   >
                     {s.name}
@@ -192,10 +235,10 @@ export default function ScheduleScreen() {
                   <Text
                     style={[
                       styles.opcaoHorario,
-                      servicoSelecionado === s.nome && styles.opcaoTextAtiva,
+                      servicoSelecionado?.id === s.id && styles.opcaoTextAtiva,
                     ]}
                   >
-                    {s.price || "A consultar"}
+                    {s.price != null ? `R$ ${Number(s.price).toFixed(2).replace('.', ',')}` : 'A consultar'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -291,11 +334,17 @@ export default function ScheduleScreen() {
           </View>
 
           <TouchableOpacity
-            style={styles.botaoConfirmar}
+            style={[
+              styles.botaoConfirmar,
+              isSubmitting && styles.botaoConfirmarDisabled,
+            ]}
             onPress={handleConfirmar}
             activeOpacity={0.85}
+            disabled={isSubmitting}
           >
-            <Text style={styles.botaoConfirmarText}>Confirmar agendamento</Text>
+            <Text style={styles.botaoConfirmarText}>
+              {isSubmitting ? 'Confirmando...' : 'Confirmar agendamento'}
+            </Text>
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -381,6 +430,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     marginTop: 8,
+  },
+  botaoConfirmarDisabled: {
+    opacity: 0.65,
   },
   botaoConfirmarText: {
     color: "#fff",

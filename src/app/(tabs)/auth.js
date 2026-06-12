@@ -1,11 +1,17 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert} from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useEffect, useState } from 'react';
-import { useAuth } from '../../context/AuthContext';
 import { useRouter } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Auth() {
-  const { user, login, register, linkBiometric, biometric } = useAuth();
+  const {
+    user,
+    login,
+    register,
+    enableBiometric,
+    biometricEnabled,
+  } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -17,91 +23,98 @@ export default function Auth() {
   const router = useRouter();
 
   useEffect(() => {
-    (async () => {
-      const compativel = await LocalAuthentication.hasHardwareAsync();
-      setBiometricSupport(compativel);
-    })();
+    Promise.all([
+      LocalAuthentication.hasHardwareAsync(),
+      LocalAuthentication.isEnrolledAsync(),
+    ]).then(([hasHardware, isEnrolled]) => {
+      setBiometricSupport(hasHardware && isEnrolled);
+    });
   }, []);
 
   useEffect(() => {
     if (user && !isProcessingLogin) {
-      return router.replace("/profile");
+      router.replace('/profile');
     }
-  }, [user, isProcessingLogin]);
+  }, [user, isProcessingLogin, router]);
 
-
-  const handleRegister = () => {
+  const handleRegister = async () => {
     if (!email || !password || !name) {
-      alert("Para cadastro, todos os campos devem estar preenchidos!");
+      alert('Para cadastro, todos os campos devem estar preenchidos!');
       return;
     }
 
-    const isBarber = selectedRole === 'barbeiro';
-    
-    const success = register(email, password, name, isBarber);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Por favor, digite um e-mail válido.');
+      return;
+    }
 
+    if (password.length < 6) {
+      alert('A senha deve ter no mínimo 6 caracteres.');
+      return;
+    }
+
+    const success = await register(email, password, name, selectedRole === 'barbeiro');
     if (success) {
       setIsRegistering(false);
-      setPassword(''); 
+      setPassword('');
     }
   };
 
-  const handleLogin = () => {
-    setIsProcessingLogin(true);
+  const finishLogin = () => {
+    setIsProcessingLogin(false);
+  };
 
-    const success = login(email, password);
-    if(success){
-      if (!biometric && biometricSupport) {
-        Alert.alert(
-          "Acesso Rápido",
-          "Utilize sua biometria para acessar o app mais rápido da próxima vez",
-          [
-            {
-              text: "Agora não",
-              onPress: () => router.replace("/")
-            },
-  
-            {
-              text: "Ativar",
-              onPress: async() => {
-                const auth = await LocalAuthentication.authenticateAsync();
-  
-                if (auth.success) {
-                  linkBiometric(email, password);
-                } else {
-                  alert("Erro ao ler biometria, tente novamente no próximo login");
-                }
-                router.replace("/");
-              }
-            }
-          ]
-        );
-      } else {
-        router.replace("/");
-      }
-    } else {
-      setIsProcessingLogin(false);
-    }
-  }
+  const promptBiometricActivation = (loggedUser) => {
+    Alert.alert(
+      'Acesso rápido',
+      'Deseja usar sua biometria para desbloquear esta sessão nos próximos acessos?',
+      [
+        {
+          text: 'Agora não',
+          onPress: finishLogin,
+        },
+        {
+          text: 'Ativar',
+          onPress: async () => {
+            const result = await enableBiometric(loggedUser.id);
+            if (!result.success) Alert.alert('Biometria', result.message);
+            finishLogin();
+          },
+        },
+      ],
+      { cancelable: false },
+    );
+  };
 
-  const handleBiometricAuth = async() => {
-    if (!biometric) {
-      alert("Faça login com usuário e senha para vincular sua biometria.");
+  const handleLogin = async () => {
+    if (isProcessingLogin) return;
+
+    if (!email || !password) {
+      alert('Por favor, preencha seu e-mail e senha para entrar.');
       return;
     }
 
-    const result = await LocalAuthentication.authenticateAsync();
-
-    if (result.success) {
-      const { email, password } = biometric;
-
-      const success = login(email, password);
-
-      if(success) {
-        router.replace("/");
-      }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      alert('Por favor, digite um e-mail válido.');
+      return;
     }
-  }
+
+    setIsProcessingLogin(true);
+    const loggedUser = await login(email, password);
+    if (!loggedUser) {
+      setIsProcessingLogin(false);
+      return;
+    }
+
+    setPassword('');
+    if (biometricSupport && !biometricEnabled) {
+      promptBiometricActivation(loggedUser);
+    } else {
+      finishLogin();
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -110,8 +123,8 @@ export default function Auth() {
       {isRegistering && (
         <>
           <View style={styles.radioContainer}>
-            <TouchableOpacity 
-              style={styles.radioButton} 
+            <TouchableOpacity
+              style={styles.radioButton}
               onPress={() => setSelectedRole('cliente')}
             >
               <View style={styles.radioCircle}>
@@ -120,8 +133,8 @@ export default function Auth() {
               <Text style={styles.radioText}>Cliente</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity 
-              style={styles.radioButton} 
+            <TouchableOpacity
+              style={styles.radioButton}
               onPress={() => setSelectedRole('barbeiro')}
             >
               <View style={styles.radioCircle}>
@@ -148,7 +161,7 @@ export default function Auth() {
         keyboardType="email-address"
         autoCapitalize="none"
       />
-      
+
       <TextInput
         style={styles.input}
         placeholder="Senha"
@@ -163,20 +176,22 @@ export default function Auth() {
             <Text style={styles.buttonText}>Cadastrar</Text>
           </TouchableOpacity>
         ) : (
-          <>
-            <TouchableOpacity style={styles.mainButton} onPress={handleLogin}>
-              <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
-            {biometricSupport && biometric && (
-              <TouchableOpacity style={[styles.mainButton, { backgroundColor: '#333', marginTop: 10 }]} onPress={handleBiometricAuth}>
-                <Text style={styles.buttonText}>Entrar com biometria</Text>
-              </TouchableOpacity>
-            )}
-          </>
+          <TouchableOpacity
+            style={[styles.mainButton, isProcessingLogin && styles.disabledButton]}
+            onPress={handleLogin}
+            disabled={isProcessingLogin}
+          >
+            <Text style={styles.buttonText}>
+              {isProcessingLogin ? 'Entrando...' : 'Entrar'}
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
 
-      <TouchableOpacity onPress={() => setIsRegistering(!isRegistering)} style={styles.secondaryButton}>
+      <TouchableOpacity
+        onPress={() => setIsRegistering(!isRegistering)}
+        style={styles.secondaryButton}
+      >
         <Text style={styles.secondaryButtonText}>
           {isRegistering ? 'Já tenho uma conta. Fazer Login' : 'Não tem conta? Cadastre-se'}
         </Text>
@@ -186,26 +201,25 @@ export default function Auth() {
 }
 
 const styles = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    justifyContent: 'center', 
+  container: {
+    flex: 1,
+    justifyContent: 'center',
     padding: 20,
-    gap: 10 
+    gap: 10,
   },
-  title: { 
-    fontSize: 24, 
-    fontWeight: 'bold', 
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20
+    marginBottom: 20,
   },
   input: {
     borderWidth: 1,
     borderColor: '#ccc',
     padding: 10,
     borderRadius: 5,
-    marginBottom: 10
+    marginBottom: 10,
   },
-  
   radioContainer: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -235,7 +249,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
   },
-
   buttonContainer: {
     marginVertical: 10,
   },
@@ -244,6 +257,9 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  disabledButton: {
+    opacity: 0.65,
   },
   buttonText: {
     color: '#fff',

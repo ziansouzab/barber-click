@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
 import { BarbershopCard } from '../../components/barbershopCard';
 import { useBarbershops } from '../../context/BarbershopContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function HomeScreen() {
-  const { barbershops } = useBarbershops();
+  const { barbershops, refetch } = useBarbershops();
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
   const router = useRouter();
 
   const [search, setSearch] = useState("");
@@ -29,12 +31,6 @@ export default function HomeScreen() {
       onPress={() => router.push(`/business/${item.id}`)}
     />
   );
-
-  const getItemLayout = (data, index) => ({
-    length: 112, 
-    offset: 112 * index,
-    index,
-  });
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -60,6 +56,8 @@ export default function HomeScreen() {
           renderItem={renderBarbershop}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       </View>
     </SafeAreaView>

@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, KeyboardAvoidingView, Platform,} from "react-native";
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
-import { Stack } from 'expo-router';
 import { CameraModal } from '../../components/CameraModal';
 import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
 
@@ -29,7 +28,8 @@ export default function CreateBarbershopScreen() {
   const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})));
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
-  const [duracaoAgendamento, setDuracaoAgendamento] = useState(30);
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState('30');
+  const [appointmentCapacity, setAppointmentCapacity] = useState('1');
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -78,19 +78,40 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    addBarbershop({
+    const parsedCapacity = Number(appointmentCapacity);
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+      alert('A capacidade por horário deve ser um número inteiro maior ou igual a 1.');
+      return;
+    }
+
+    const result = await addBarbershop({
       name: name.trim(),
       owner: user.id,
       description: description.trim(),
       imageUri: imageUri,
       horarios,
       duracaoAgendamento,
+      appointmentCapacity: parsedCapacity,
       location: {
         latitude: location.latitude,
         longitude: location.longitude
       },
       endereco: await getAddressFromCoords(location.latitude, location.longitude)
     });
+
+    if (!result?.barbershopCreated) {
+      alert(`Não foi possível cadastrar o estabelecimento: ${result?.message ?? 'Erro desconhecido.'}`);
+      return;
+    }
+
+    const warnings = [];
+    if (!result.hoursSaved) warnings.push(`horários: ${result.message}`);
+    if (!result.imageSaved) warnings.push(`imagem: ${result.imageMessage}`);
+    if (warnings.length) {
+      alert(`Barbearia criada, mas houve falha ao salvar ${warnings.join(' | ')}`);
+      router.replace('/(tabs)/business');
+      return;
+    }
 
     alert('Estabelecimento cadastrado com sucesso!');
     router.replace('/(tabs)/business');
@@ -122,7 +143,7 @@ export default function CreateBarbershopScreen() {
         })
         setLocationMessage('Revise o ponto no mapa ou toque para ajustar.');
       
-      } catch (error) {
+      } catch (_error) {
           setLocationMessage('Não foi possível obter sua localização. Selecione manualmente no mapa.');
       } finally {
           setIsLoadingLocation(false);
@@ -372,6 +393,20 @@ export default function CreateBarbershopScreen() {
               keyboardType='numeric'
               onChangeText={setDuracaoAgendamento}
               /> 
+          </View>
+
+          <View style={styles.formGroup}>
+            <Text style={styles.label}>Capacidade de atendimentos por horário</Text>
+            <TextInput
+              style={styles.horarioInput}
+              placeholder="1"
+              value={appointmentCapacity}
+              keyboardType="numeric"
+              onChangeText={setAppointmentCapacity}
+            />
+            <Text style={styles.mapHint}>
+              Quantos clientes podem iniciar atendimento no mesmo horário.
+            </Text>
           </View>
 
           <TouchableOpacity

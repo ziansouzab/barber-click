@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
@@ -7,9 +7,8 @@ import { useAuth } from '../../context/AuthContext';
 import { CameraModal } from '../../components/CameraModal';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, updateAvatar } = useAuth();
   const router = useRouter();
-  const [avatarUri, setAvatarUri] = useState(null);
   const [cameraOpen, setCameraOpen] = useState(false);
 
   const handleLogout = () => {
@@ -35,8 +34,8 @@ export default function ProfileScreen() {
       <View style={styles.container}>
         <View style={styles.avatarContainer}>
           <TouchableOpacity style={styles.avatarWrapper} onPress={() => setCameraOpen(true)} activeOpacity={0.8}>
-            {avatarUri ? (
-              <Image source={{ uri: avatarUri }} style={styles.avatarImage} />
+            {user.avatarUrl ? (
+              <Image source={{ uri: user.avatarUrl }} style={styles.avatarImage} />
             ) : (
               <View style={styles.avatar}>
                 <FontAwesome name="user" size={48} color="#FFF" />
@@ -80,9 +79,12 @@ export default function ProfileScreen() {
       <CameraModal
         visible={cameraOpen}
         onClose={() => setCameraOpen(false)}
-        onPhotoTaken={(uri) => {
-          setAvatarUri(uri);
+        onPhotoTaken={async (uri) => {
           setCameraOpen(false);
+          const result = await updateAvatar(uri);
+          if (!result.success) {
+            Alert.alert('Não foi possível atualizar a foto', result.message);
+          }
         }}
       />
     </SafeAreaView>
