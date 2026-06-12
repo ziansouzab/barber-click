@@ -30,12 +30,6 @@ export default function HomeScreen() {
     />
   );
 
-  const getItemLayout = (data, index) => ({
-    length: 112, 
-    offset: 112 * index,
-    index,
-  });
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>

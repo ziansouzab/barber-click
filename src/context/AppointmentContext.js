@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useMemo, useEffect } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
@@ -38,7 +38,7 @@ export function AppointmentProvider({ children }) {
   const [error, setError] = useState(null);
   const { user } = useAuth();
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     setLoading(true);
     setError(null);
     if (!user) {
@@ -57,11 +57,11 @@ export function AppointmentProvider({ children }) {
     }
     setAppointments((data ?? []).map(mapAppointment));
     setLoading(false);
-  };
+  }, [user]);
 
   useEffect(() => {
     fetchAppointments();
-  }, [user]);
+  }, [fetchAppointments]);
 
   const addAppointment = async (appointment) => {
     const { error } = await supabase.rpc('book_appointment', {
@@ -95,18 +95,15 @@ export function AppointmentProvider({ children }) {
     return { success: true };
   };
 
-  const value = useMemo(
-    () => ({
-      appointments,
-      loading,
-      error,
-      addAppointment,
-      updateStatus,
-      removeAppointment,
-      refetch: fetchAppointments,
-    }),
-    [appointments, loading, error],
-  );
+  const value = {
+    appointments,
+    loading,
+    error,
+    addAppointment,
+    updateStatus,
+    removeAppointment,
+    refetch: fetchAppointments,
+  };
 
   return <AppointmentContext.Provider value={value}>{children}</AppointmentContext.Provider>;
 }

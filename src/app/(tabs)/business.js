@@ -54,7 +54,7 @@ export default function BusinessTab() {
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Nenhum estabelecimento cadastrado ainda.</Text>
             {user?.isBarber ? (
-              <Text style={styles.emptyHint}>Para adicionar, clique em "Adicionar estabelecimento"</Text>
+              <Text style={styles.emptyHint}>Para adicionar, use o botão Adicionar estabelecimento.</Text>
             ) : (
               <Text style={styles.emptyHint}>Faça login como barbeiro para cadastrar um estabelecimento.</Text>
             )}

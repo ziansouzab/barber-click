@@ -153,7 +153,7 @@ export default function UpdateBarbershopScreen() {
         })
         setLocationMessage('Revise o ponto no mapa ou toque para ajustar.');
       
-      } catch (error) {
+      } catch (_error) {
           setLocationMessage('Não foi possível obter sua localização. Selecione manualmente no mapa.');
       } finally {
           setIsLoadingLocation(false);

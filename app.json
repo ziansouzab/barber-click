@@ -30,11 +30,12 @@
       "expo-router",
       "expo-secure-store",
       [
-      "expo-image-picker",
+        "expo-image-picker",
         {
           "photosPermission": "Este aplicativo precisa de permissão para acessar a sua galeria de fotos."
         }
-      ]
+      ],
+      "expo-font"
     ]
   }
 }

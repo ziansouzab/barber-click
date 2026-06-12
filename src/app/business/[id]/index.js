@@ -1,12 +1,11 @@
 import { useState } from 'react';
 import { ActivityIndicator, Alert, View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../../context/BarbershopContext';
 import { useAuth } from '../../../context/AuthContext';
 import { ProductModal } from '../../../components/ProductModal';
-import { Stack } from 'expo-router';
 import { DEFAULT_BARBERSHOP_IMAGE } from '../../../constants/images';
 
 

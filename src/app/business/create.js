@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, KeyboardAvoidingView, Platform,} from "react-native";
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
-import { Stack } from 'expo-router';
 import { CameraModal } from '../../components/CameraModal';
 import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
 
@@ -144,7 +143,7 @@ export default function CreateBarbershopScreen() {
         })
         setLocationMessage('Revise o ponto no mapa ou toque para ajustar.');
       
-      } catch (error) {
+      } catch (_error) {
           setLocationMessage('Não foi possível obter sua localização. Selecione manualmente no mapa.');
       } finally {
           setIsLoadingLocation(false);

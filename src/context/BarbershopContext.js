@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { publicUrl, removeStoredImage, uploadBarbershopImage } from '../lib/storage';
 import { horariosParaRows, rowsParaHorarios } from '../utils/horarios';
@@ -28,7 +28,7 @@ export function BarbershopProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBarbershops = async () => {
+  const fetchBarbershops = useCallback(async () => {
     setLoading(true);
     setError(null);
     const { data, error } = await supabase
@@ -43,11 +43,11 @@ export function BarbershopProvider({ children }) {
     }
     setBarbershops((data ?? []).map(mapBarbershop));
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchBarbershops();
-  }, []);
+  }, [fetchBarbershops]);
 
   const addBarbershop = async (barbershop) => {
     const { data, error } = await supabase
@@ -226,20 +226,17 @@ export function BarbershopProvider({ children }) {
     return { success: true };
   };
 
-  const value = useMemo(
-    () => ({
-      barbershops,
-      loading,
-      error,
-      addBarbershop,
-      updateBarbershop,
-      addProduct,
-      updateProduct,
-      deleteProduct,
-      refetch: fetchBarbershops,
-    }),
-    [barbershops, loading, error]
-  );
+  const value = {
+    barbershops,
+    loading,
+    error,
+    addBarbershop,
+    updateBarbershop,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    refetch: fetchBarbershops,
+  };
 
   return <BarbershopContext.Provider value={value}>{children}</BarbershopContext.Provider>;
 }
