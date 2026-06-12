@@ -94,7 +94,7 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const linkBiometric = (email, password) => {
+  const linkBiometric = async (email, password) => {
     const credentials = { email, password };
     
     try {
