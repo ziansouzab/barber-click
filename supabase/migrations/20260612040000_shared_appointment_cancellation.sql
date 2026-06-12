@@ -1,3 +1,6 @@
+alter type public.appointment_status
+  add value if not exists 'cancelado';
+
 begin;
 
 alter table public.appointments
@@ -73,7 +76,7 @@ begin
   end if;
 
   update public.appointments
-     set status = p_status
+     set status = p_status::public.appointment_status
    where id = p_appointment_id
   returning * into v_appointment;
 
