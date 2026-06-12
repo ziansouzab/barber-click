@@ -3,10 +3,12 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppointments } from "../../context/AppointmentContext";
 import { useAuth } from "../../context/AuthContext";
 import { formatarDataBR, obterNomeDia, horarioParaMinutos } from "../../utils/datas";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 
 export default function MyAppointmentsScreen() {
-  const { appointments } = useAppointments();
+  const { appointments, refetch } = useAppointments();
   const { user } = useAuth();
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const meusAgendamentos = [...appointments]
     .filter((a) => a.clienteId === user?.id)
@@ -58,6 +60,8 @@ export default function MyAppointmentsScreen() {
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Nenhum agendamento ainda.</Text>

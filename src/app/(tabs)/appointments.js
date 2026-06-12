@@ -5,12 +5,14 @@ import { useAppointments } from "../../context/AppointmentContext";
 import { useAuth } from "../../context/AuthContext";
 import { useBarbershops } from "../../context/BarbershopContext";
 import { horarioParaMinutos, formatarDataBR, obterNomeDia, obterNomeDiaCurto, formatarDataCurta, formatarDataISO } from "../../utils/datas";
+import { usePullToRefresh } from "../../hooks/usePullToRefresh";
 
 
 export default function AppointmentsScreen() {
-  const { appointments, updateStatus } = useAppointments();
+  const { appointments, updateStatus, refetch: refetchAppointments } = useAppointments();
   const { user } = useAuth();
-  const { barbershops } = useBarbershops();
+  const { barbershops, refetch: refetchBarbershops } = useBarbershops();
+  const { refreshing, onRefresh } = usePullToRefresh(() => Promise.all([refetchAppointments(), refetchBarbershops()]));
   const [dataFiltro, setDataFiltro] = useState("Todos");
   const [updatingId, setUpdatingId] = useState(null);
 
@@ -164,6 +166,8 @@ export default function AppointmentsScreen() {
         renderItem={({ item }) => renderAppointmentCard(item)}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListHeaderComponent={
           <>
             <View style={styles.header}>

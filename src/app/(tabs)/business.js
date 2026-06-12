@@ -5,11 +5,13 @@ import { useMemo } from 'react';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
 import { BarbershopCard } from '../../components/BarbershopCard';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function BusinessTab() {
-  const { barbershops } = useBarbershops();
+  const { barbershops, refetch } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const userBarbershops = useMemo(() => {
     if (!barbershops || !user) return [];
@@ -50,6 +52,8 @@ export default function BusinessTab() {
         renderItem={renderBarbershop}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>Nenhum estabelecimento cadastrado ainda.</Text>
