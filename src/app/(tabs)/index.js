@@ -1,8 +1,8 @@
-import { StyleSheet, View, FlatList, TextInput } from "react-native";
+import {StyleSheet, View, FlatList, TextInput, Image, Text} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
-import { BarbershopCard } from '../../components/BarbershopCard';
+import { BarbershopCard } from '../../components/barbershopCard';
 import { useBarbershops } from '../../context/BarbershopContext';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
@@ -35,6 +35,14 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
+        <View style={styles.header}>
+          <Image
+            source={require("../../../assets/splash-icon.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>Barber Click</Text>
+        </View>
         <TextInput
           style={styles.search}
           placeholder="Buscar barbearia..."
@@ -43,7 +51,7 @@ export default function HomeScreen() {
           clearButtonMode="while-editing"
         />
         <FlatList
-          data={filtered} 
+          data={filtered}
           keyExtractor={(item) => item.id}
           renderItem={renderBarbershop}
           contentContainerStyle={styles.listContent}
@@ -82,5 +90,25 @@ const styles = StyleSheet.create({
   listContent: {
     paddingVertical: 16,
     paddingBottom: 40,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    gap: 10,
+  },
+  logo: {
+    width: 60,
+    height: 60,
+    borderRadius: 10,
+  },
+  appName: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#1D1D1D",
   },
 });
