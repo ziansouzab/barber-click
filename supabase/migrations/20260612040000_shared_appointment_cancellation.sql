@@ -1,6 +1,3 @@
-alter type public.appointment_status
-  add value if not exists 'cancelado';
-
 begin;
 
 alter table public.appointments
