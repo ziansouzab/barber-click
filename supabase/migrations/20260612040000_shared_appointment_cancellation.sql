@@ -42,13 +42,11 @@ declare
   v_owner_id uuid;
 begin
   if v_user_id is null then
-    raise exception 'Authentication is required to update an appointment.'
-      using errcode = '42501';
+    raise exception 'Authentication is required to update an appointment.';
   end if;
 
   if p_status is null or p_status not in ('aprovado', 'recusado') then
-    raise exception 'Invalid appointment status transition.'
-      using errcode = '22023';
+    raise exception 'Invalid appointment status transition.';
   end if;
 
   select appointment.*
@@ -58,8 +56,7 @@ begin
    for update of appointment;
 
   if not found then
-    raise exception 'Appointment not found.'
-      using errcode = 'P0002';
+    raise exception 'Appointment not found.';
   end if;
 
   select owner_id
@@ -68,13 +65,11 @@ begin
    where id = v_appointment.barbershop_id;
 
   if v_owner_id <> v_user_id then
-    raise exception 'Only the barbershop owner can update this appointment.'
-      using errcode = '42501';
+    raise exception 'Only the barbershop owner can update this appointment.';
   end if;
 
   if v_appointment.status <> 'pendente' then
-    raise exception 'Only pending appointments can be approved or rejected.'
-      using errcode = '22023';
+    raise exception 'Only pending appointments can be approved or rejected.';
   end if;
 
   update public.appointments
@@ -104,8 +99,7 @@ declare
   v_cancellation_limit timestamp without time zone;
 begin
   if v_user_id is null then
-    raise exception 'Authentication is required to cancel an appointment.'
-      using errcode = '42501';
+    raise exception 'Authentication is required to cancel an appointment.';
   end if;
 
   select appointment.*
@@ -115,8 +109,7 @@ begin
    for update of appointment;
 
   if not found then
-    raise exception 'Appointment not found.'
-      using errcode = 'P0002';
+    raise exception 'Appointment not found.';
   end if;
 
   select owner_id
@@ -128,18 +121,15 @@ begin
   v_is_owner := v_owner_id = v_user_id;
 
   if not v_is_customer and not v_is_owner then
-    raise exception 'You cannot cancel this appointment.'
-      using errcode = '42501';
+    raise exception 'You cannot cancel this appointment.';
   end if;
 
   if v_is_owner and v_appointment.status <> 'aprovado' then
-    raise exception 'The barbershop can only cancel approved appointments.'
-      using errcode = '22023';
+    raise exception 'The barbershop can only cancel approved appointments.';
   end if;
 
   if v_is_customer and v_appointment.status not in ('pendente', 'aprovado') then
-    raise exception 'The customer can only cancel pending or approved appointments.'
-      using errcode = '22023';
+    raise exception 'The customer can only cancel pending or approved appointments.';
   end if;
 
   v_appointment_time := v_appointment.date + v_appointment.time;
@@ -147,8 +137,7 @@ begin
     timezone('America/Sao_Paulo', now()) + interval '2 hours';
 
   if v_appointment_time < v_cancellation_limit then
-    raise exception 'Appointments must be cancelled at least two hours in advance.'
-      using errcode = '22023';
+    raise exception 'Appointments must be cancelled at least two hours in advance.';
   end if;
 
   update public.appointments
