@@ -53,6 +53,7 @@ export function AuthProvider({ children }) {
       name: data?.name ?? '',
       isBarber: data?.is_barber ?? false,
       avatarUrl: publicUrl('avatars', data?.avatar_url),
+      avatarPath: data?.avatar_url ?? null,
     });
     setLoading(false);
   }, []);
@@ -210,34 +211,36 @@ export function AuthProvider({ children }) {
 
   const updateAvatar = async (uri) => {
     if (!user) return { success: false, message: 'Usuário não autenticado.' };
-    try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('avatar_url')
-        .eq('id', user.id)
-        .single();
-      if (profileError) return { success: false, message: profileError.message };
 
-      const { path } = await uploadAvatar(user.id, uri);
-      const { error } = await supabase
-        .from('profiles')
-        .update({ avatar_url: path })
-        .eq('id', user.id);
-      if (error) {
-        await removeStoredImage('avatars', path).catch(console.error);
-        return { success: false, message: error.message };
-      }
-
-      setUser((prev) => ({ ...prev, avatarUrl: publicUrl('avatars', path) }));
-      if (profile?.avatar_url) {
-        await removeStoredImage('avatars', profile.avatar_url).catch((cleanupError) => {
-          console.error('Erro ao remover avatar anterior:', cleanupError);
-        });
-      }
-      return { success: true };
-    } catch (error) {
-      return { success: false, message: error.message };
+    const uploaded = await uploadAvatar(user.id, uri).catch((error) => {
+      console.error('Erro ao enviar avatar:', error);
+      return null;
+    });
+    if (!uploaded) {
+      return { success: false, message: 'Não foi possível enviar a foto. Tente novamente.' };
     }
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({ avatar_url: uploaded.path })
+      .eq('id', user.id);
+    if (error) {
+      await removeStoredImage('avatars', uploaded.path).catch(console.error);
+      return { success: false, message: 'A foto foi enviada, mas não foi possível salvar no seu perfil.' };
+    }
+
+    const previousPath = user.avatarPath;
+    setUser((prev) => ({
+      ...prev,
+      avatarUrl: publicUrl('avatars', uploaded.path),
+      avatarPath: uploaded.path,
+    }));
+    if (previousPath) {
+      await removeStoredImage('avatars', previousPath).catch((cleanupError) => {
+        console.error('Erro ao remover avatar anterior:', cleanupError);
+      });
+    }
+    return { success: true };
   };
 
   return (

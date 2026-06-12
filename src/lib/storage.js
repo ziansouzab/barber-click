@@ -8,7 +8,7 @@ async function uploadImage(bucket, path, uri) {
   });
   const { error } = await supabase.storage
     .from(bucket)
-    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: true });
+    .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: false });
   if (error) throw error;
   return { path };
 }
