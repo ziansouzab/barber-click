@@ -1,10 +1,49 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Tabs } from 'expo-router';
+import { useMemo } from 'react';
+import { useAppointments } from '../../context/AppointmentContext';
 import { useAuth } from '../../context/AuthContext';
+import { useBarbershops } from '../../context/BarbershopContext';
 
 export default function TabLayout() {
-  
   const { user } = useAuth();
+  const { appointments } = useAppointments();
+  const { barbershops } = useBarbershops();
+
+  const pendingCounts = useMemo(() => {
+    if (!user) return { barber: 0, customer: 0 };
+
+    if (!user.isBarber) {
+      return {
+        barber: 0,
+        customer: appointments.filter(
+          (appointment) =>
+            appointment.status === 'pendente' &&
+            String(appointment.clienteId) === String(user.id)
+        ).length,
+      };
+    }
+
+    const ownedShopIds = new Set(
+      barbershops
+        .filter((barbershop) => String(barbershop.owner) === String(user.id))
+        .map((barbershop) => String(barbershop.id))
+    );
+
+    return {
+      barber: appointments.filter(
+        (appointment) =>
+          appointment.status === 'pendente' &&
+          ownedShopIds.has(String(appointment.shopId))
+      ).length,
+      customer: 0,
+    };
+  }, [appointments, barbershops, user]);
+
+  const pendingBadgeStyle = {
+    backgroundColor: '#ff2a00',
+    color: '#fff',
+  };
 
   return (
     <Tabs screenOptions={{ tabBarActiveTintColor: "red", headerShown: false }}>
@@ -35,6 +74,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <FontAwesome size={28} name="calendar" color={color} />
           ),
+          tabBarBadge: pendingCounts.barber || undefined,
+          tabBarBadgeStyle: pendingBadgeStyle,
           href: user?.isBarber ? "/appointments" : null,
         }}
       />
@@ -46,6 +87,8 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <FontAwesome size={28} name="clock-o" color={color} />
           ),
+          tabBarBadge: pendingCounts.customer || undefined,
+          tabBarBadgeStyle: pendingBadgeStyle,
           href: user && !user.isBarber ? "/myappointments" : null,
         }}
       />
@@ -71,8 +114,6 @@ export default function TabLayout() {
           href: !user ? "/auth" : null,
         }}
       />
-
-      
     </Tabs>
   );
 }
