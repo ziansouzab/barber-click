@@ -1,9 +1,28 @@
-import { createContext, useState, useContext, useEffect } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as LocalAuthentication from 'expo-local-authentication';
 import { supabase } from '../lib/supabase';
 import { publicUrl, uploadAvatar } from '../lib/storage';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  clearBiometricUserId,
+  getBiometricUserId,
+  setBiometricUserId,
+} from '../lib/secureStorage';
 
 export const AuthContext = createContext({});
+
+const LEGACY_BIOMETRIC_KEY = '@biometric_auth';
+
+const clearLegacyAuthStorage = async () => {
+  const keys = await AsyncStorage.getAllKeys();
+  const legacySessionKeys = keys.filter(
+    (key) => key.startsWith('sb-') && key.endsWith('-auth-token'),
+  );
+  await Promise.all([
+    AsyncStorage.removeItem(LEGACY_BIOMETRIC_KEY),
+    legacySessionKeys.length ? AsyncStorage.multiRemove(legacySessionKeys) : Promise.resolve(),
+  ]);
+};
 
 const translateAuthError = (message) => {
   if (message.includes('Invalid login credentials')) return 'E-mail ou senha incorretos.';
@@ -16,41 +35,12 @@ const translateAuthError = (message) => {
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
-  const [biometric, setBiometric] = useState(null);
+  const [pendingSessionUser, setPendingSessionUser] = useState(null);
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
+  const [isBiometricLocked, setIsBiometricLocked] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const loadBiometrics = async () => {
-      try {
-        const savedBiometric = await AsyncStorage.getItem('@biometric_auth');
-        if (savedBiometric) {
-          setBiometric(JSON.parse(savedBiometric));
-        }
-      } catch (error) {
-        console.error("Erro ao carregar biometria:", error);
-      }
-    };
-    loadBiometrics();
-    
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) loadProfile(session.user);
-      else setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) loadProfile(session.user);
-      else {
-        setUser(null);
-        setLoading(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-
-  const loadProfile = async (authUser) => {
+  const loadProfile = useCallback(async (authUser) => {
     const { data } = await supabase
       .from('profiles')
       .select('name, is_barber, avatar_url')
@@ -65,7 +55,68 @@ export function AuthProvider({ children }) {
       avatarUrl: publicUrl('avatars', data?.avatar_url),
     });
     setLoading(false);
-  };
+  }, []);
+
+  useEffect(() => {
+    let subscription;
+    let active = true;
+
+    const initializeAuth = async () => {
+      try {
+        await clearLegacyAuthStorage();
+
+        const [savedBiometricUserId, sessionResult] = await Promise.all([
+          getBiometricUserId(),
+          supabase.auth.getSession(),
+        ]);
+        const session = sessionResult.data.session;
+
+        if (!active) return;
+
+        if (session?.user && savedBiometricUserId === session.user.id) {
+          setPendingSessionUser(session.user);
+          setBiometricEnabled(true);
+          setIsBiometricLocked(true);
+          setLoading(false);
+        } else if (session?.user) {
+          if (savedBiometricUserId) await clearBiometricUserId();
+          setBiometricEnabled(false);
+          await loadProfile(session.user);
+        } else {
+          if (savedBiometricUserId) await clearBiometricUserId();
+          setBiometricEnabled(false);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Erro ao restaurar a sessão:', error);
+        setLoading(false);
+      }
+
+      const authListener = supabase.auth.onAuthStateChange((event, session) => {
+        if (!active || event === 'INITIAL_SESSION') return;
+
+        if (!session?.user) {
+          setUser(null);
+          setPendingSessionUser(null);
+          setIsBiometricLocked(false);
+          setLoading(false);
+          return;
+        }
+
+        setTimeout(() => {
+          if (active) loadProfile(session.user);
+        }, 0);
+      });
+      subscription = authListener.data.subscription;
+    };
+
+    initializeAuth();
+
+    return () => {
+      active = false;
+      subscription?.unsubscribe();
+    };
+  }, [loadProfile]);
 
   const register = async (email, password, name, isBarber) => {
     const { error } = await supabase.auth.signUp({
@@ -82,30 +133,79 @@ export function AuthProvider({ children }) {
   };
 
   const login = async (email, password) => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       alert(translateAuthError(error.message));
       return false;
     }
+
+    const savedBiometricUserId = await getBiometricUserId();
+    if (savedBiometricUserId && savedBiometricUserId !== data.user.id) {
+      await clearBiometricUserId();
+      setBiometricEnabled(false);
+    }
+    await loadProfile(data.user);
     return true;
   };
 
   const logout = async () => {
+    await Promise.all([
+      clearBiometricUserId(),
+      clearLegacyAuthStorage(),
+    ]);
     await supabase.auth.signOut();
+    setBiometricEnabled(false);
+    setIsBiometricLocked(false);
+    setPendingSessionUser(null);
     setUser(null);
   };
 
-  const linkBiometric = async (email, password) => {
-    const credentials = { email, password };
-    
-    try {
-      await AsyncStorage.setItem('@biometric_auth', JSON.stringify(credentials));
-      setBiometric(credentials);
-      alert('Biometrica vinculada com sucesso!');
-    } catch (error) {
-      console.error("Erro ao salvar biometria", error);
-      alert("Não foi possível cadastrar a biometria neste dispositivo!");
+  const enableBiometric = async () => {
+    if (!user) {
+      return { success: false, message: 'Entre na sua conta antes de ativar a biometria.' };
     }
+
+    try {
+      const [hasHardware, isEnrolled] = await Promise.all([
+        LocalAuthentication.hasHardwareAsync(),
+        LocalAuthentication.isEnrolledAsync(),
+      ]);
+      if (!hasHardware || !isEnrolled) {
+        return { success: false, message: 'Nenhuma biometria está configurada neste dispositivo.' };
+      }
+
+      const auth = await LocalAuthentication.authenticateAsync({
+        promptMessage: 'Ativar acesso por biometria',
+        cancelLabel: 'Cancelar',
+      });
+      if (!auth.success) {
+        return { success: false, message: 'Não foi possível confirmar sua biometria.' };
+      }
+
+      await setBiometricUserId(user.id);
+      setBiometricEnabled(true);
+      return { success: true };
+    } catch (error) {
+      console.error('Erro ao ativar biometria:', error);
+      return { success: false, message: 'Não foi possível ativar a biometria neste dispositivo.' };
+    }
+  };
+
+  const unlockBiometric = async () => {
+    if (!pendingSessionUser) return false;
+
+    const auth = await LocalAuthentication.authenticateAsync({
+      promptMessage: 'Desbloquear Barber Click',
+      cancelLabel: 'Cancelar',
+      disableDeviceFallback: false,
+    });
+    if (!auth.success) return false;
+
+    setLoading(true);
+    await loadProfile(pendingSessionUser);
+    setPendingSessionUser(null);
+    setIsBiometricLocked(false);
+    return true;
   };
 
   const updateAvatar = async (uri) => {
@@ -117,7 +217,18 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, login, register, logout, linkBiometric, biometric, loading, updateAvatar }}
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        enableBiometric,
+        unlockBiometric,
+        biometricEnabled,
+        isBiometricLocked,
+        loading,
+        updateAvatar,
+      }}
     >
       {children}
     </AuthContext.Provider>
