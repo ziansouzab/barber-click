@@ -1,4 +1,4 @@
-import { createContext, useState, useContext, useEffect, useCallback } from 'react';
+import { createContext, useState, useContext, useEffect, useCallback, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { supabase } from '../lib/supabase';
@@ -14,14 +14,7 @@ export const AuthContext = createContext({});
 const LEGACY_BIOMETRIC_KEY = '@biometric_auth';
 
 const clearLegacyAuthStorage = async () => {
-  const keys = await AsyncStorage.getAllKeys();
-  const legacySessionKeys = keys.filter(
-    (key) => key.startsWith('sb-') && key.endsWith('-auth-token'),
-  );
-  await Promise.all([
-    AsyncStorage.removeItem(LEGACY_BIOMETRIC_KEY),
-    legacySessionKeys.length ? AsyncStorage.multiRemove(legacySessionKeys) : Promise.resolve(),
-  ]);
+  await AsyncStorage.removeItem(LEGACY_BIOMETRIC_KEY);
 };
 
 const translateAuthError = (message) => {
@@ -39,6 +32,7 @@ export function AuthProvider({ children }) {
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [isBiometricLocked, setIsBiometricLocked] = useState(false);
   const [loading, setLoading] = useState(true);
+  const lockedRef = useRef(false);
 
   const loadProfile = useCallback(async (authUser) => {
     const { data } = await supabase
@@ -57,6 +51,10 @@ export function AuthProvider({ children }) {
     });
     setLoading(false);
   }, []);
+
+  useEffect(() => {
+    lockedRef.current = isBiometricLocked;
+  }, [isBiometricLocked]);
 
   useEffect(() => {
     let subscription;
@@ -104,6 +102,8 @@ export function AuthProvider({ children }) {
           return;
         }
 
+        if (lockedRef.current) return;
+
         setTimeout(() => {
           if (active) loadProfile(session.user);
         }, 0);
@@ -137,7 +137,7 @@ export function AuthProvider({ children }) {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       alert(translateAuthError(error.message));
-      return false;
+      return null;
     }
 
     const savedBiometricUserId = await getBiometricUserId();
@@ -146,7 +146,7 @@ export function AuthProvider({ children }) {
       setBiometricEnabled(false);
     }
     await loadProfile(data.user);
-    return true;
+    return data.user;
   };
 
   const logout = async () => {
@@ -161,8 +161,9 @@ export function AuthProvider({ children }) {
     setUser(null);
   };
 
-  const enableBiometric = async () => {
-    if (!user) {
+  const enableBiometric = async (userId) => {
+    const id = userId ?? user?.id;
+    if (!id) {
       return { success: false, message: 'Entre na sua conta antes de ativar a biometria.' };
     }
 
@@ -183,7 +184,7 @@ export function AuthProvider({ children }) {
         return { success: false, message: 'Não foi possível confirmar sua biometria.' };
       }
 
-      await setBiometricUserId(user.id);
+      await setBiometricUserId(id);
       setBiometricEnabled(true);
       return { success: true };
     } catch (error) {

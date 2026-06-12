@@ -63,10 +63,9 @@ export default function Auth() {
 
   const finishLogin = () => {
     setIsProcessingLogin(false);
-    router.replace('/');
   };
 
-  const promptBiometricActivation = () => {
+  const promptBiometricActivation = (loggedUser) => {
     Alert.alert(
       'Acesso rápido',
       'Deseja usar sua biometria para desbloquear esta sessão nos próximos acessos?',
@@ -78,7 +77,7 @@ export default function Auth() {
         {
           text: 'Ativar',
           onPress: async () => {
-            const result = await enableBiometric();
+            const result = await enableBiometric(loggedUser.id);
             if (!result.success) Alert.alert('Biometria', result.message);
             finishLogin();
           },
@@ -103,15 +102,15 @@ export default function Auth() {
     }
 
     setIsProcessingLogin(true);
-    const success = await login(email, password);
-    if (!success) {
+    const loggedUser = await login(email, password);
+    if (!loggedUser) {
       setIsProcessingLogin(false);
       return;
     }
 
     setPassword('');
     if (biometricSupport && !biometricEnabled) {
-      promptBiometricActivation();
+      promptBiometricActivation(loggedUser);
     } else {
       finishLogin();
     }
