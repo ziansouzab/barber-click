@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
+import { Alert, View, Text, StyleSheet, FlatList, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useAppointments } from "../../context/AppointmentContext";
 import { useAuth } from "../../context/AuthContext";
@@ -8,10 +8,11 @@ import { horarioParaMinutos, formatarDataBR, obterNomeDia, obterNomeDiaCurto, fo
 
 
 export default function AppointmentsScreen() {
-  const { appointments, updateStatus, removeAppointment } = useAppointments();
+  const { appointments, updateStatus } = useAppointments();
   const { user } = useAuth();
   const { barbershops } = useBarbershops();
   const [dataFiltro, setDataFiltro] = useState("Todos");
+  const [updatingId, setUpdatingId] = useState(null);
 
   const minhasBarbearias = useMemo(() => {
     return barbershops.filter(
@@ -90,6 +91,16 @@ export default function AppointmentsScreen() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  const handleUpdateStatus = async (id, status) => {
+    if (updatingId) return;
+    setUpdatingId(id);
+    const result = await updateStatus(id, status);
+    setUpdatingId(null);
+    if (!result.success) {
+      Alert.alert('Não foi possível atualizar o agendamento', result.message);
+    }
+  };
+
   const renderAppointmentCard = (item, isPendingSection = false) => (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -116,14 +127,16 @@ export default function AppointmentsScreen() {
         <View style={styles.acoes}>
           <TouchableOpacity
             style={[styles.botao, styles.botaoAprovar]}
-            onPress={() => updateStatus(item.id, "aprovado")}
+            onPress={() => handleUpdateStatus(item.id, "aprovado")}
+            disabled={updatingId === item.id}
           >
             <Text style={styles.botaoText}>Aprovar</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[styles.botao, styles.botaoRecusar]}
-            onPress={() => updateStatus(item.id, "recusado")}
+            onPress={() => handleUpdateStatus(item.id, "recusado")}
+            disabled={updatingId === item.id}
           >
             <Text style={styles.botaoText}>Recusar</Text>
           </TouchableOpacity>

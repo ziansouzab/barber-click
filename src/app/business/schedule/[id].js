@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform,} from "react-native";
+import { ActivityIndicator, View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, KeyboardAvoidingView, Platform,} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useBarbershops } from "../../../context/BarbershopContext";
@@ -9,8 +9,16 @@ import { horarioParaMinutos, minutosParaHorario, formatarDataISO, formatarDataBR
 
 export default function ScheduleScreen() {
   const { id } = useLocalSearchParams();
-  const { barbershops } = useBarbershops();
-  const { appointments, addAppointment } = useAppointments();
+  const {
+    barbershops,
+    loading: barbershopsLoading,
+    error: barbershopsError,
+  } = useBarbershops();
+  const {
+    appointments,
+    loading: appointmentsLoading,
+    addAppointment,
+  } = useAppointments();
   const { user } = useAuth();
   const router = useRouter();
 
@@ -104,11 +112,25 @@ export default function ScheduleScreen() {
     shop,
   ]);
 
+  if (barbershopsLoading || appointmentsLoading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#ff2a00" />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   if (!shop) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.notFoundText}>Barbearia não encontrada.</Text>
+          <Text style={styles.notFoundText}>
+            {barbershopsError
+              ? `Não foi possível carregar: ${barbershopsError}`
+              : 'Barbearia não encontrada.'}
+          </Text>
           <TouchableOpacity onPress={() => router.back()}>
             <Text style={styles.backLink}>Voltar</Text>
           </TouchableOpacity>

@@ -25,17 +25,24 @@ function mapBarbershop(row) {
 
 export function BarbershopProvider({ children }) {
   const [barbershops, setBarbershops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const fetchBarbershops = async () => {
+    setLoading(true);
+    setError(null);
     const { data, error } = await supabase
       .from('barbershops')
       .select('*, services(*), business_hours(*)')
       .order('created_at', { ascending: false });
     if (error) {
       console.error(error);
+      setError(error.message);
+      setLoading(false);
       return;
     }
     setBarbershops((data ?? []).map(mapBarbershop));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -151,28 +158,41 @@ export function BarbershopProvider({ children }) {
   };
 
   const addProduct = async (barbershopId, product) => {
-    await supabase
+    const { error } = await supabase
       .from('services')
       .insert({ barbershop_id: barbershopId, name: product.name, price: product.price });
+    if (error) return { success: false, message: error.message };
     await fetchBarbershops();
+    return { success: true };
   };
 
   const updateProduct = async (barbershopId, productId, changes) => {
-    await supabase
+    const { error } = await supabase
       .from('services')
       .update({ name: changes.name, price: changes.price })
-      .eq('id', productId);
+      .eq('id', productId)
+      .eq('barbershop_id', barbershopId);
+    if (error) return { success: false, message: error.message };
     await fetchBarbershops();
+    return { success: true };
   };
 
   const deleteProduct = async (barbershopId, productId) => {
-    await supabase.from('services').delete().eq('id', productId);
+    const { error } = await supabase
+      .from('services')
+      .delete()
+      .eq('id', productId)
+      .eq('barbershop_id', barbershopId);
+    if (error) return { success: false, message: error.message };
     await fetchBarbershops();
+    return { success: true };
   };
 
   const value = useMemo(
     () => ({
       barbershops,
+      loading,
+      error,
       addBarbershop,
       updateBarbershop,
       addProduct,
@@ -180,7 +200,7 @@ export function BarbershopProvider({ children }) {
       deleteProduct,
       refetch: fetchBarbershops,
     }),
-    [barbershops]
+    [barbershops, loading, error]
   );
 
   return <BarbershopContext.Provider value={value}>{children}</BarbershopContext.Provider>;

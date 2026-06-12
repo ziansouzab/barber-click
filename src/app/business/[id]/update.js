@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
@@ -20,7 +20,7 @@ export default function UpdateBarbershopScreen() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const { barbershops, updateBarbershop } = useBarbershops(); 
+  const { barbershops, loading, error, updateBarbershop } = useBarbershops();
 
   const shop = barbershops.find((b) => b.id === id);
 
@@ -44,16 +44,29 @@ export default function UpdateBarbershopScreen() {
   const [mapRegion, setMapRegion] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationMessage, setLocationMessage] = useState('Arraste no mapa para ajustar o local.');
+  const initializedShopId = useRef(null);
 
   useEffect(() => {
-    if (shop?.location) {
-      setMapRegion({
-        latitude: shop.location.latitude,
-        longitude: shop.location.longitude,
-        latitudeDelta: 0.005,
-        longitudeDelta: 0.005
-      });
-    }
+    if (!shop || initializedShopId.current === shop.id) return;
+
+    initializedShopId.current = shop.id;
+    setName(shop.name ?? '');
+    setDescription(shop.description ?? '');
+    setImageUri(shop.imageUri ?? null);
+    setHorarios(shop.horarios ?? []);
+    setDuracaoAgendamento(String(shop.duracaoAgendamento ?? 30));
+    setAppointmentCapacity(String(shop.appointmentCapacity ?? 1));
+    setLocation(shop.location ?? null);
+    setMapRegion(
+      shop.location
+        ? {
+            latitude: shop.location.latitude,
+            longitude: shop.location.longitude,
+            latitudeDelta: 0.005,
+            longitudeDelta: 0.005,
+          }
+        : null,
+    );
   }, [shop]);
 
   const hasPermissionIssue = useMemo(() => locationMessage.includes('negada'), [locationMessage]);
@@ -155,13 +168,28 @@ export default function UpdateBarbershopScreen() {
     });
   };
 
+  if (loading) {
+    return (
+      <View style={styles.safeArea}>
+        <Stack.Screen options={{ title: 'Editar Estabelecimento', headerShown: true }} />
+        <View style={styles.lockedContainer}>
+          <ActivityIndicator size="large" color="#0F9D58" />
+        </View>
+      </View>
+    );
+  }
+
   if (!shop || user?.id !== shop?.owner) {
     return (
       <View style={styles.safeArea}>
         <Stack.Screen options={{ title: 'Erro de Acesso', headerShown: true }} />
         <View style={styles.lockedContainer}>
           <Text style={styles.lockedTitle}>Acesso restrito</Text>
-          <Text style={styles.lockedMessage}>Você não tem permissão para editar este estabelecimento ou ele não existe.</Text>
+          <Text style={styles.lockedMessage}>
+            {error
+              ? `Não foi possível carregar o estabelecimento: ${error}`
+              : 'Você não tem permissão para editar este estabelecimento ou ele não existe.'}
+          </Text>
           <TouchableOpacity style={styles.lockedButton} onPress={() => router.back()}>
             <Text style={styles.lockedButtonText}>Voltar</Text>
           </TouchableOpacity>

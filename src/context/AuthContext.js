@@ -209,10 +209,19 @@ export function AuthProvider({ children }) {
   };
 
   const updateAvatar = async (uri) => {
-    if (!user) return;
-    const { path } = await uploadAvatar(user.id, uri);
-    await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
-    setUser((prev) => ({ ...prev, avatarUrl: publicUrl('avatars', path) }));
+    if (!user) return { success: false, message: 'Usuário não autenticado.' };
+    try {
+      const { path } = await uploadAvatar(user.id, uri);
+      const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: path })
+        .eq('id', user.id);
+      if (error) return { success: false, message: error.message };
+      setUser((prev) => ({ ...prev, avatarUrl: publicUrl('avatars', path) }));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.message };
+    }
   };
 
   return (

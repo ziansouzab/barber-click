@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { Alert, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useRouter } from 'expo-router';
@@ -81,7 +81,10 @@ export default function ProfileScreen() {
         onClose={() => setCameraOpen(false)}
         onPhotoTaken={async (uri) => {
           setCameraOpen(false);
-          await updateAvatar(uri);
+          const result = await updateAvatar(uri);
+          if (!result.success) {
+            Alert.alert('Não foi possível atualizar a foto', result.message);
+          }
         }}
       />
     </SafeAreaView>

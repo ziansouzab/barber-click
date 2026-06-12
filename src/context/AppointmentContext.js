@@ -34,11 +34,16 @@ const BOOKING_ERROR_MESSAGES = {
 
 export function AppointmentProvider({ children }) {
   const [appointments, setAppointments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const { user } = useAuth();
 
   const fetchAppointments = async () => {
+    setLoading(true);
+    setError(null);
     if (!user) {
       setAppointments([]);
+      setLoading(false);
       return;
     }
     const { data, error } = await supabase
@@ -46,9 +51,12 @@ export function AppointmentProvider({ children }) {
       .select('*, barbershops(name), profiles(name)');
     if (error) {
       console.error(error);
+      setError(error.message);
+      setLoading(false);
       return;
     }
     setAppointments((data ?? []).map(mapAppointment));
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -63,6 +71,7 @@ export function AppointmentProvider({ children }) {
       p_time: appointment.horario,
     });
     if (error) {
+      setError(error.message);
       return {
         success: false,
         message: BOOKING_ERROR_MESSAGES[error.message] ?? error.message,
@@ -73,24 +82,30 @@ export function AppointmentProvider({ children }) {
   };
 
   const updateStatus = async (id, status) => {
-    await supabase.from('appointments').update({ status }).eq('id', id);
+    const { error } = await supabase.from('appointments').update({ status }).eq('id', id);
+    if (error) return { success: false, message: error.message };
     await fetchAppointments();
+    return { success: true };
   };
 
   const removeAppointment = async (id) => {
-    await supabase.from('appointments').delete().eq('id', id);
+    const { error } = await supabase.from('appointments').delete().eq('id', id);
+    if (error) return { success: false, message: error.message };
     await fetchAppointments();
+    return { success: true };
   };
 
   const value = useMemo(
     () => ({
       appointments,
+      loading,
+      error,
       addAppointment,
       updateStatus,
       removeAppointment,
       refetch: fetchAppointments,
     }),
-    [appointments],
+    [appointments, loading, error],
   );
 
   return <AppointmentContext.Provider value={value}>{children}</AppointmentContext.Provider>;
