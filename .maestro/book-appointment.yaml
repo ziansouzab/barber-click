@@ -1,0 +1,25 @@
+appId: com.barberclick.app
+env:
+  EMAIL: cliente@teste.com
+  SENHA: "123456"
+  BARBEARIA: Barbearia Teste
+  SERVICO: Corte
+  DATA: "20/06/2026"
+  HORARIO: "09:00"
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: ${EMAIL}
+      SENHA: ${SENHA}
+- tapOn: "Home"
+- tapOn: ${BARBEARIA}
+- assertVisible: "Agendar horário"
+- tapOn: "Agendar horário"
+- assertVisible: "Serviço"
+- tapOn: ${SERVICO}
+- tapOn: ${DATA}
+- tapOn: ${HORARIO}
+- tapOn: "Confirmar agendamento"
+- assertVisible: "Agendamento enviado!"
+- tapOn: "OK"
