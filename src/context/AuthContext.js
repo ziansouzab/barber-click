@@ -1,6 +1,7 @@
 import { createContext, useState, useContext, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { publicUrl, uploadAvatar } from '../lib/storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const AuthContext = createContext({});
 
