@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>15/15</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/8</span>
+                <span class='fraction'>8/8</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/5</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/11</span>
+                <span class='fraction'>11/11</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -101,66 +101,66 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { decode } from 'base64-arraybuffer';
 import * as FileSystem from 'expo-file-system/legacy';
 import { supabase } from './supabase';
 &nbsp;
-async function <span class="fstat-no" title="function not covered" >uploadImage(</span>bucket, path, uri) {
-  const base64 = <span class="cstat-no" title="statement not covered" >await FileSystem.readAsStringAsync(uri, {</span>
+async function uploadImage(bucket, path, uri) {
+  const base64 = await FileSystem.readAsStringAsync(uri, {
     encoding: FileSystem.EncodingType.Base64,
   });
-  const { error } = <span class="cstat-no" title="statement not covered" >await supabase.storage</span>
+  const { error } = await supabase.storage
     .from(bucket)
     .upload(path, decode(base64), { contentType: 'image/jpeg', upsert: false });
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
-<span class="cstat-no" title="statement not covered" >  return { path };</span>
+  if (error) throw error;
+  return { path };
 }
 &nbsp;
-export function <span class="fstat-no" title="function not covered" >publicUrl(</span>bucket, path) {
-<span class="cstat-no" title="statement not covered" >  if (!path) <span class="cstat-no" title="statement not covered" >return null;</span></span>
-<span class="cstat-no" title="statement not covered" >  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;</span>
+export function publicUrl(bucket, path) {
+  if (!path) return null;
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >uploadBarbershopImage(</span>barbershopId, uri) {
-<span class="cstat-no" title="statement not covered" >  return uploadImage('barbershops', `${barbershopId}/${Date.now()}.jpg`, uri);</span>
+export async function uploadBarbershopImage(barbershopId, uri) {
+  return uploadImage('barbershops', `${barbershopId}/${Date.now()}.jpg`, uri);
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >uploadAvatar(</span>userId, uri) {
-<span class="cstat-no" title="statement not covered" >  return uploadImage('avatars', `${userId}/${Date.now()}.jpg`, uri);</span>
+export async function uploadAvatar(userId, uri) {
+  return uploadImage('avatars', `${userId}/${Date.now()}.jpg`, uri);
 }
 &nbsp;
-export async function <span class="fstat-no" title="function not covered" >removeStoredImage(</span>bucket, path) {
-<span class="cstat-no" title="statement not covered" >  if (!path) <span class="cstat-no" title="statement not covered" >return;</span></span>
-  const { error } = <span class="cstat-no" title="statement not covered" >await supabase.storage.from(bucket).remove([path]);</span>
-<span class="cstat-no" title="statement not covered" >  if (error) <span class="cstat-no" title="statement not covered" >throw error;</span></span>
+export async function removeStoredImage(bucket, path) {
+  if (!path) return;
+  const { error } = await supabase.storage.from(bucket).remove([path]);
+  if (error) throw error;
 }
 &nbsp;</pre></td></tr></table></pre>
 
@@ -169,7 +169,7 @@ export async function <span class="fstat-no" title="function not covered" >remov
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-06-12T19:29:58.343Z
+                at 2026-06-12T20:00:19.368Z
             </div>
         <script src="../prettify.js"></script>
         <script>

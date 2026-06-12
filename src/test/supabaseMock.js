@@ -12,7 +12,7 @@ const CHAIN_METHODS = [
   'limit',
 ];
 
-function createQueryBuilder(result) {
+export function createQueryBuilder(result) {
   const builder = {};
   for (const method of CHAIN_METHODS) {
     builder[method] = jest.fn(() => builder);
