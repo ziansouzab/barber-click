@@ -78,7 +78,7 @@ export default function UpdateBarbershopScreen() {
       return;
     }
 
-    await updateBarbershop(id, {
+    const result = await updateBarbershop(id, {
       name: name.trim(),
       description: description.trim(),
       imageUri: imageUri,
@@ -89,6 +89,16 @@ export default function UpdateBarbershopScreen() {
       },
       endereco: await getAddressFromCoords(location.latitude, location.longitude)
     });
+
+    if (!result?.barbershopUpdated) {
+      alert(`Não foi possível atualizar o estabelecimento: ${result?.message ?? 'Erro desconhecido.'}`);
+      return;
+    }
+
+    if (!result.hoursSaved) {
+      alert(`Estabelecimento atualizado, mas não foi possível salvar os horários: ${result.message}`);
+      return;
+    }
 
     alert('Estabelecimento atualizado com sucesso!');
     router.back();

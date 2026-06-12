@@ -78,7 +78,7 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    await addBarbershop({
+    const result = await addBarbershop({
       name: name.trim(),
       owner: user.id,
       description: description.trim(),
@@ -91,6 +91,17 @@ export default function CreateBarbershopScreen() {
       },
       endereco: await getAddressFromCoords(location.latitude, location.longitude)
     });
+
+    if (!result?.barbershopCreated) {
+      alert(`Não foi possível cadastrar o estabelecimento: ${result?.message ?? 'Erro desconhecido.'}`);
+      return;
+    }
+
+    if (!result.hoursSaved) {
+      alert(`Barbearia criada, mas não foi possível salvar os horários: ${result.message}`);
+      router.replace('/(tabs)/business');
+      return;
+    }
 
     alert('Estabelecimento cadastrado com sucesso!');
     router.replace('/(tabs)/business');

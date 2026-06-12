@@ -56,8 +56,12 @@ export function BarbershopProvider({ children }) {
       .select()
       .single();
     if (error) {
-      alert(error.message);
-      return;
+      console.error('Erro ao criar barbearia:', error);
+      return {
+        barbershopCreated: false,
+        hoursSaved: false,
+        message: error.message,
+      };
     }
 
     if (barbershop.imageUri) {
@@ -65,39 +69,82 @@ export function BarbershopProvider({ children }) {
       await supabase.from('barbershops').update({ image_path: path }).eq('id', data.id);
     }
 
-    await supabase.from('business_hours').insert(horariosParaRows(data.id, barbershop.horarios));
+    const { error: hoursError } = await supabase
+      .from('business_hours')
+      .insert(horariosParaRows(data.id, barbershop.horarios));
+
+    if (hoursError) {
+      console.error('Erro ao salvar horários da barbearia:', hoursError);
+    }
+
     await fetchBarbershops();
+
+    return {
+      barbershopCreated: true,
+      hoursSaved: !hoursError,
+      barbershopId: data.id,
+      message: hoursError?.message,
+    };
   };
 
   const updateBarbershop = async (id, updatedData) => {
-  const patch = {
-    name: updatedData.name,
-    description: updatedData.description,
-    address: updatedData.endereco,
-    latitude: updatedData.location?.latitude,
-    longitude: updatedData.location?.longitude,
-  };
+    const patch = {
+      name: updatedData.name,
+      description: updatedData.description,
+      address: updatedData.endereco,
+      latitude: updatedData.location?.latitude,
+      longitude: updatedData.location?.longitude,
+    };
 
-  if (updatedData.imageUri && !updatedData.imageUri.startsWith('http')) {
-    const { data: currentBarber } = await supabase
-      .from('barbershops')
-      .select('image_path')
-      .eq('id', id)
-      .single();
-
-    if (currentBarber?.image_path) {
-      await supabase.storage
+    if (updatedData.imageUri && !updatedData.imageUri.startsWith('http')) {
+      const { data: currentBarber } = await supabase
         .from('barbershops')
-        .remove([currentBarber.image_path]);
+        .select('image_path')
+        .eq('id', id)
+        .single();
+
+      if (currentBarber?.image_path) {
+        await supabase.storage
+          .from('barbershops')
+          .remove([currentBarber.image_path]);
+      }
+
+      const { path } = await uploadBarbershopImage(id, updatedData.imageUri);
+      patch.image_path = path;
     }
 
-    const { path } = await uploadBarbershopImage(id, updatedData.imageUri);
-    patch.image_path = path;
-  }
+    const { error: barbershopError } = await supabase
+      .from('barbershops')
+      .update(patch)
+      .eq('id', id);
 
-  await supabase.from('barbershops').update(patch).eq('id', id);
-  await fetchBarbershops();
-};
+    if (barbershopError) {
+      console.error('Erro ao atualizar barbearia:', barbershopError);
+      return {
+        barbershopUpdated: false,
+        hoursSaved: false,
+        message: barbershopError.message,
+      };
+    }
+
+    const { error: hoursError } = await supabase
+      .from('business_hours')
+      .upsert(horariosParaRows(id, updatedData.horarios), {
+        onConflict: 'barbershop_id,weekday',
+      });
+
+    if (hoursError) {
+      console.error('Erro ao atualizar horários da barbearia:', hoursError);
+    }
+
+    await fetchBarbershops();
+
+    return {
+      barbershopUpdated: true,
+      hoursSaved: !hoursError,
+      message: hoursError?.message,
+    };
+  };
 
   const addProduct = async (barbershopId, product) => {
     await supabase
