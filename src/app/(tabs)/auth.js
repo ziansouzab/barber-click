@@ -185,13 +185,15 @@ export default function Auth() {
         secureTextEntry
       />
 
-      <TextInput
+      {isRegistering && (
+        <TextInput
         style={styles.input}
         placeholder="Confirme sua senha..."
         value={confirm}
         onChangeText={setConfirm}
         secureTextEntry
       />
+      )}
 
       <View style={styles.buttonContainer}>
         {isRegistering ? (
