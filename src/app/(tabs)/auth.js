@@ -15,6 +15,7 @@ export default function Auth() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
   const [name, setName] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [selectedRole, setSelectedRole] = useState('cliente');
@@ -40,6 +41,11 @@ export default function Auth() {
   const handleRegister = async () => {
     if (!email || !password || !name) {
       alert('Para cadastro, todos os campos devem estar preenchidos!');
+      return;
+    }
+
+    if (confirm !== password) {
+      alert('Para cadastro, as senhas devem ser iguais!');
       return;
     }
 
@@ -176,6 +182,14 @@ export default function Auth() {
         placeholder="Senha"
         value={password}
         onChangeText={setPassword}
+        secureTextEntry
+      />
+
+      <TextInput
+        style={styles.input}
+        placeholder="Confirme sua senha..."
+        value={confirm}
+        onChangeText={setConfirm}
         secureTextEntry
       />
 
