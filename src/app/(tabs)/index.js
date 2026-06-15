@@ -2,11 +2,13 @@ import {StyleSheet, View, FlatList, TextInput, Image, Text} from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState, useMemo } from "react";
-import { BarbershopCard } from '../../components/barbershopCard';
+import { BarbershopCard } from '../../components/BarbershopCard'
 import { useBarbershops } from '../../context/BarbershopContext';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function HomeScreen() {
-  const { barbershops } = useBarbershops();
+  const { barbershops, refetch } = useBarbershops();
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
   const router = useRouter();
 
   const [search, setSearch] = useState("");
@@ -30,18 +32,12 @@ export default function HomeScreen() {
     />
   );
 
-  const getItemLayout = (data, index) => ({
-    length: 112, 
-    offset: 112 * index,
-    index,
-  });
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.container}>
         <View style={styles.header}>
           <Image
-            source={require("../../../assets/splash-icon.png")}
+            source={require("../../../assets/icon.png")}
             style={styles.logo}
             resizeMode="contain"
           />
@@ -60,6 +56,8 @@ export default function HomeScreen() {
           renderItem={renderBarbershop}
           contentContainerStyle={styles.listContent}
           showsVerticalScrollIndicator={false}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
         />
       </View>
     </SafeAreaView>

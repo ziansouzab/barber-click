@@ -1,0 +1,24 @@
+appId: com.barberclick.app
+env:
+  NOME: Cliente Teste
+  EMAIL: novo-cliente@teste.com
+  SENHA: "123456"
+---
+- launchApp:
+    clearState: true
+- tapOn: "Entrar / Cadastrar"
+- tapOn: "Não tem conta? Cadastre-se"
+- assertVisible: "Criar Conta"
+- tapOn: "Cliente"
+- tapOn: "Seu Nome"
+- inputText: ${NOME}
+- tapOn: "E-mail"
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- hideKeyboard
+- tapOn: "Cadastrar"
+- assertVisible: "Cadastro realizado com sucesso!"
+- tapOn:
+    text: "OK"
+    optional: true

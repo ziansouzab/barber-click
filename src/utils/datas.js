@@ -66,3 +66,12 @@ export const isHoje = (dataISO) => {
   const hojeISO = formatarDataISO(hoje);
   return dataISO === hojeISO;
 };
+
+export const temAntecedenciaMinima = (dataISO, horario, horas = 2) => {
+  if (!dataISO || !horario) return false;
+
+  const dataAgendamento = new Date(`${dataISO}T${horario}:00-03:00`);
+  if (Number.isNaN(dataAgendamento.getTime())) return false;
+
+  return dataAgendamento.getTime() - Date.now() >= horas * 60 * 60 * 1000;
+};

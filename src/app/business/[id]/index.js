@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ActivityIndicator, Alert, View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, useWindowDimensions, RefreshControl } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import MapView, { Marker } from 'react-native-maps';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useBarbershops } from '../../../context/BarbershopContext';
 import { useAuth } from '../../../context/AuthContext';
 import { ProductModal } from '../../../components/ProductModal';
-import { Stack } from 'expo-router';
+import { DEFAULT_BARBERSHOP_IMAGE } from '../../../constants/images';
+import { usePullToRefresh } from '../../../hooks/usePullToRefresh';
 
 
 export const options = {
@@ -16,21 +17,42 @@ export const options = {
 
 export default function BarbershopDetailScreen() {
   const { id } = useLocalSearchParams();
-  const { barbershops, addProduct, updateProduct, deleteProduct } = useBarbershops();
+  const {
+    barbershops,
+    loading,
+    error,
+    addProduct,
+    updateProduct,
+    deleteProduct,
+    refetch,
+  } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
   const { width } = useWindowDimensions();
   const [showInfo, setShowInfo] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const shop = barbershops.find((b) => b.id === id);
+
+  if (loading) {
+    return (
+      <View style={styles.safeArea}>
+        <View style={styles.centered}>
+          <ActivityIndicator size="large" color="#0F9D58" />
+        </View>
+      </View>
+    );
+  }
 
   if (!shop) {
     return (
       <View style={styles.safeArea}>
         <View style={styles.centered}>
-          <Text style={styles.notFoundText}>Estabelecimento nao encontrado.</Text>
+          <Text style={styles.notFoundText}>
+            {error ? `Não foi possível carregar: ${error}` : 'Estabelecimento não encontrado.'}
+          </Text>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
             <Text style={styles.backButtonText}>Voltar</Text>
           </TouchableOpacity>
@@ -48,14 +70,38 @@ export default function BarbershopDetailScreen() {
 
   const openCreateProduct = () => { setEditingProduct(null); setProductModalOpen(true); };
   const openEditProduct = (p) => { setEditingProduct(p); setProductModalOpen(true); };
-  const handleSaveProduct = (data) => {
-    if (editingProduct) { updateProduct(shop.id, editingProduct.id, data); }
-    else { addProduct(shop.id, data); }
+  const handleSaveProduct = async (data) => {
+    const result = editingProduct
+      ? await updateProduct(shop.id, editingProduct.id, data)
+      : await addProduct(shop.id, data);
+    if (!result.success) {
+      Alert.alert('Não foi possível salvar o serviço', result.message);
+      return;
+    }
     setProductModalOpen(false);
   };
   const handleDeleteProduct = () => {
-    if (editingProduct) { deleteProduct(shop.id, editingProduct.id); }
-    setProductModalOpen(false);
+    if (!editingProduct) return;
+
+    Alert.alert(
+      'Excluir serviço',
+      `Deseja realmente excluir "${editingProduct.name}"?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            const result = await deleteProduct(shop.id, editingProduct.id);
+            if (!result.success) {
+              Alert.alert('Não foi possível excluir o serviço', result.message);
+              return;
+            }
+            setProductModalOpen(false);
+          },
+        },
+      ],
+    );
   };
   const formatPrice = (v) => `R$ ${Number(v).toFixed(2).replace('.', ',')}`;
 
@@ -65,12 +111,15 @@ export default function BarbershopDetailScreen() {
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Image
           source={
             typeof shop.imageUri === "number"
               ? shop.imageUri
-              : { uri: shop.imageUri }
+              : shop.imageUri
+                ? { uri: shop.imageUri }
+                : DEFAULT_BARBERSHOP_IMAGE
           }
           style={styles.coverImage}
           resizeMode="cover"
@@ -103,7 +152,6 @@ export default function BarbershopDetailScreen() {
             <Text style={styles.locationText} numberOfLines={1}>
               {shop.endereco}
             </Text>
-            <Text style={styles.metaText} numberOfLines={1}> {shop.endereco}</Text>
           </View>
         </View>
 

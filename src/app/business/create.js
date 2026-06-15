@@ -1,11 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import * as Location from 'expo-location';
 import MapView, { Marker } from 'react-native-maps';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, Image, KeyboardAvoidingView, Platform,} from "react-native";
 import { useBarbershops } from '../../context/BarbershopContext';
 import { useAuth } from '../../context/AuthContext';
-import { Stack } from 'expo-router';
 import { CameraModal } from '../../components/CameraModal';
 import { AddPhotoButton } from '../../components/ui/AddPhotoButton';
 
@@ -29,9 +28,8 @@ export default function CreateBarbershopScreen() {
   const [horarios, setHorarios] = useState(DIAS.map((dia) => ({dia, aberto: dia !== "Domingo", abertura: "09:00", fechamento: "18:00",})));
   const [mesmoHorario, setMesmoHorario] = useState(false);
   const [horarioGeral, setHorarioGeral] = useState({abertura: "09:00", fechamento: "18:00",});
-  const [duracaoAgendamento, setDuracaoAgendamento] = useState(30);
-  const [multiploAtendimento, setMultiploAtendimento] = useState(false);
-  const [capacidadeAtendimento, setCapacidadeAtendimento] = useState(2);
+  const [duracaoAgendamento, setDuracaoAgendamento] = useState('30');
+  const [appointmentCapacity, setAppointmentCapacity] = useState('1');
 
   const [location, setLocation] = useState(null);
   const [mapRegion, setMapRegion] = useState(null);
@@ -80,23 +78,40 @@ export default function CreateBarbershopScreen() {
       return;
     }
 
-    addBarbershop({
+    const parsedCapacity = Number(appointmentCapacity);
+    if (!Number.isInteger(parsedCapacity) || parsedCapacity < 1) {
+      alert('A capacidade por horário deve ser um número inteiro maior ou igual a 1.');
+      return;
+    }
+
+    const result = await addBarbershop({
       name: name.trim(),
       owner: user.id,
       description: description.trim(),
       imageUri: imageUri,
       horarios,
       duracaoAgendamento,
-      capacidadeAtendimento: multiploAtendimento ? Number(capacidadeAtendimento): 1,
+      appointmentCapacity: parsedCapacity,
       location: {
         latitude: location.latitude,
-        longitude: location.longitude,
+        longitude: location.longitude
       },
-      endereco: await getAddressFromCoords(
-        location.latitude,
-        location.longitude,
-      ),
+      endereco: await getAddressFromCoords(location.latitude, location.longitude)
     });
+
+    if (!result?.barbershopCreated) {
+      alert(`Não foi possível cadastrar o estabelecimento: ${result?.message ?? 'Erro desconhecido.'}`);
+      return;
+    }
+
+    const warnings = [];
+    if (!result.hoursSaved) warnings.push(`horários: ${result.message}`);
+    if (!result.imageSaved) warnings.push(`imagem: ${result.imageMessage}`);
+    if (warnings.length) {
+      alert(`Barbearia criada, mas houve falha ao salvar ${warnings.join(' | ')}`);
+      router.replace('/(tabs)/business');
+      return;
+    }
 
     alert('Estabelecimento cadastrado com sucesso!');
     router.replace('/(tabs)/business');
@@ -128,7 +143,7 @@ export default function CreateBarbershopScreen() {
         })
         setLocationMessage('Revise o ponto no mapa ou toque para ajustar.');
       
-      } catch (error) {
+      } catch (_error) {
           setLocationMessage('Não foi possível obter sua localização. Selecione manualmente no mapa.');
       } finally {
           setIsLoadingLocation(false);
@@ -168,8 +183,8 @@ export default function CreateBarbershopScreen() {
 
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === "ios" ? "position" : "height"}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 180 : 0}
       >
         <ScrollView
           contentContainerStyle={styles.content}
@@ -183,7 +198,7 @@ export default function CreateBarbershopScreen() {
           </Text>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Nome do estabelecimento</Text>
+            <Text style={styles.label}>Nome fantasia</Text>
             <TextInput
               value={name}
               onChangeText={setName}
@@ -370,49 +385,28 @@ export default function CreateBarbershopScreen() {
           </View>
 
           <View style={styles.formGroup}>
-            <Text style={styles.label}>
-              Duração Média do Atendimento em Minutos
-            </Text>
-            <TextInput
+             <Text style={styles.label}>Duração Média do Atendimento em Minutos</Text>
+             <TextInput
               style={styles.horarioInput}
               placeholder="30"
               value={duracaoAgendamento}
-              keyboardType="numeric"
+              keyboardType='numeric'
               onChangeText={setDuracaoAgendamento}
-            />
+              /> 
           </View>
+
           <View style={styles.formGroup}>
-            <Text style={styles.label}>Múltiplos atendimentos simultâneos</Text>
-
-            <TouchableOpacity
-              style={styles.diaToggle}
-              onPress={() => setMultiploAtendimento(!multiploAtendimento)}
-            >
-              <View
-                style={[
-                  styles.toggleCircle,
-                  multiploAtendimento && styles.toggleCircleAtivo,
-                ]}
-              />
-              <Text style={styles.diaNome}>
-                {multiploAtendimento ? "Ativado" : "Desativado"}
-              </Text>
-            </TouchableOpacity>
-
-            {multiploAtendimento && (
-              <View style={{ marginTop: 8 }}>
-                <Text style={styles.label}>
-                  Número de atendimentos por horário
-                </Text>
-                <TextInput
-                  style={styles.horarioInput}
-                  placeholder="2"
-                  value={String(capacidadeAtendimento)}
-                  keyboardType="numeric"
-                  onChangeText={(v) => setCapacidadeAtendimento(v)}
-                />
-              </View>
-            )}
+            <Text style={styles.label}>Capacidade de atendimentos por horário</Text>
+            <TextInput
+              style={styles.horarioInput}
+              placeholder="1"
+              value={appointmentCapacity}
+              keyboardType="numeric"
+              onChangeText={setAppointmentCapacity}
+            />
+            <Text style={styles.mapHint}>
+              Quantos clientes podem iniciar atendimento no mesmo horário.
+            </Text>
           </View>
 
           <TouchableOpacity
@@ -446,7 +440,7 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingBottom: 40,
     gap: 16,
-    
+    marginBottom: 20
   },
   title: {
     fontSize: 24,

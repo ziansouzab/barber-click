@@ -1,36 +1,42 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity } from 'react-native';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { DEFAULT_BARBERSHOP_IMAGE } from '../constants/images';
 
 export function BarbershopCard({ name, rating, endereco, imageUri, onPress }) {
   const hasRating = typeof rating === 'number' && rating > 0;
   const ratingLabel = hasRating ? rating.toFixed(1) : 'Novo';
 
   return (
-    <TouchableOpacity 
+    <TouchableOpacity
       style={styles.cardContainer}
       onPress={onPress}
       activeOpacity={0.8}
     >
-      <Image 
-        source={{ uri: imageUri }} 
-        style={styles.image} 
+      <Image
+        source={imageUri ? { uri: imageUri } : DEFAULT_BARBERSHOP_IMAGE}
+        style={styles.image}
         resizeMode="cover"
       />
-      
+
       <View style={styles.infoContainer}>
         <Text style={styles.name} numberOfLines={1}>
           {name}
         </Text>
-        
+
         <View style={styles.metaContainer}>
-          <FontAwesome name="star" size={14} color={hasRating ? '#F5A623' : '#B0B0B0'} />
-          <Text style={[styles.rating, !hasRating && styles.ratingNew]}>{ratingLabel}</Text>
+          <FontAwesome
+            name="star"
+            size={14}
+            color={hasRating ? '#F5A623' : '#B0B0B0'}
+          />
+          <Text style={[styles.rating, !hasRating && styles.ratingNew]}>
+            {ratingLabel}
+          </Text>
         </View>
 
         <View style={styles.metaContainer}>
           <Text style={styles.metaText}>{endereco}</Text>
         </View>
-        
       </View>
     </TouchableOpacity>
   );
@@ -52,7 +58,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 5,
-    backgroundColor: '#E0E0E0', 
+    backgroundColor: '#E0E0E0',
   },
   infoContainer: {
     flex: 1,
@@ -82,10 +88,5 @@ const styles = StyleSheet.create({
   metaText: {
     fontSize: 12,
     color: '#666',
-  },
-  price: {
-    fontSize: 14,
-    color: '#888',
-    fontWeight: '500',
   },
 });

@@ -4,6 +4,7 @@ import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'reac
 export function ProductModal({ visible, onClose, onSave, onDelete, product }) {
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -12,7 +13,8 @@ export function ProductModal({ visible, onClose, onSave, onDelete, product }) {
     }
   }, [visible, product]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
+    if (isSubmitting) return;
     if (!name.trim()) {
       alert('Preencha o nome do produto.');
       return;
@@ -22,7 +24,12 @@ export function ProductModal({ visible, onClose, onSave, onDelete, product }) {
       alert('Informe um preço válido.');
       return;
     }
-    onSave({ name: name.trim(), price: parsedPrice });
+    setIsSubmitting(true);
+    try {
+      await onSave({ name: name.trim(), price: parsedPrice });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -52,8 +59,15 @@ export function ProductModal({ visible, onClose, onSave, onDelete, product }) {
             />
           </View>
 
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave} activeOpacity={0.85}>
-            <Text style={styles.saveButtonText}>Salvar</Text>
+          <TouchableOpacity
+            style={[styles.saveButton, isSubmitting && styles.disabledButton]}
+            onPress={handleSave}
+            activeOpacity={0.85}
+            disabled={isSubmitting}
+          >
+            <Text style={styles.saveButtonText}>
+              {isSubmitting ? 'Salvando...' : 'Salvar'}
+            </Text>
           </TouchableOpacity>
 
           {product && (
@@ -117,6 +131,9 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  disabledButton: {
+    opacity: 0.65,
   },
   deleteButton: {
     backgroundColor: '#C0392B',

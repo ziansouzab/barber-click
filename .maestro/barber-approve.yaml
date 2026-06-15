@@ -1,0 +1,14 @@
+appId: com.barberclick.app
+env:
+  EMAIL: barbeiro@teste.com
+  SENHA: "123456"
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: ${EMAIL}
+      SENHA: ${SENHA}
+- tapOn: "Agendamentos"
+- assertVisible: "Pendentes de aceitar"
+- tapOn: "Aprovar"
+- assertVisible: "Aprovado"

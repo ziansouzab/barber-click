@@ -1,0 +1,18 @@
+appId: com.barberclick.app
+env:
+  EMAIL: cliente@teste.com
+  SENHA: "123456"
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: ${EMAIL}
+      SENHA: ${SENHA}
+- tapOn: "Meus Agendamentos"
+- assertVisible: "Cancelar agendamento"
+- tapOn: "Cancelar agendamento"
+- assertVisible: "Essa ação não poderá ser desfeita."
+- tapOn:
+    text: "Cancelar agendamento"
+    index: 1
+- assertVisible: "Cancelado por você"
