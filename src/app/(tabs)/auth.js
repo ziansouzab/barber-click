@@ -34,7 +34,7 @@ export default function Auth() {
 
   useEffect(() => {
     if (user && !isProcessingLogin) {
-      router.replace('/profile');
+      router.replace('/');
     }
   }, [user, isProcessingLogin, router]);
 
