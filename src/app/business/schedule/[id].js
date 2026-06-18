@@ -380,6 +380,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "700",
     color: "#1D1D1D",
+    textAlign: "center",
   },
   section: {
     gap: 10,
