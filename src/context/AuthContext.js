@@ -23,6 +23,7 @@ const translateAuthError = (message) => {
   if (message.includes('Password should be at least')) return 'A senha deve ter no mínimo 6 caracteres.';
   if (message.includes('rate limit')) return 'Muitas tentativas. Aguarde alguns minutos e tente novamente.';
   if (message.includes('Email not confirmed')) return 'Por favor, confirme seu e-mail antes de entrar.';
+  if (message.includes("Email address") && message.includes("already"))return "Este e-mail já está em uso.";
   return 'Ocorreu um erro inesperado. Tente novamente.';
 };
 
@@ -244,6 +245,33 @@ export function AuthProvider({ children }) {
     return { success: true };
   };
 
+  const updateEmail = async (newEmail) => {
+    const { error } = await supabase.auth.updateUser({ email: newEmail });
+    if (error)
+      return { success: false, message: translateAuthError(error.message) };
+    setUser((prev) => ({ ...prev, email: newEmail }));
+    return { success: true };
+  };
+
+  const updatePassword = async (newPassword) => {
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    if (error)
+      return { success: false, message: translateAuthError(error.message) };
+    return { success: true };
+  };
+
+  const deleteAccount = async () => {
+    if (!user) return { success: false, message: "Usuário não autenticado." };
+    const { error } = await supabase.rpc("delete_user");
+    if (error)
+      return {
+        success: false,
+        message: "Não foi possível excluir a conta. Tente novamente.",
+      };
+    await logout();
+    return { success: true };
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -257,6 +285,9 @@ export function AuthProvider({ children }) {
         isBiometricLocked,
         loading,
         updateAvatar,
+        updateEmail,
+        updatePassword,
+        deleteAccount,
       }}
     >
       {children}
