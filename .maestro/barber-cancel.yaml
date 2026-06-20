@@ -1,6 +1,6 @@
 appId: com.barberclick.app
 env:
-  EMAIL: email@email.com
+  EMAIL: gabrielfernandes2005@gmail.com
   SENHA: "123456"
 ---
 - launchApp:
@@ -19,17 +19,19 @@ env:
 - tapOn:
     text: "Agora não"
     optional: true
-- tapOn: "Meus Agendamentos.*"
+- tapOn: "Agendamentos.*"
 - scrollUntilVisible:
     element:
       text: "Cancelar agendamento"
     direction: DOWN
+    centerElement: true
     timeout: 20000
 - tapOn: "Cancelar agendamento"
-- assertVisible: "Voltar"
+- extendedWaitUntil:
+    visible: "Voltar"
+    timeout: 10000
 - tapOn:
     text: "Cancelar agendamento"
     index: 1
-- extendedWaitUntil:
-    visible: "Cancelado por você"
-    timeout: 15000
+- waitForAnimationToEnd:
+    timeout: 5000

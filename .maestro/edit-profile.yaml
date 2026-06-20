@@ -19,17 +19,12 @@ env:
 - tapOn:
     text: "Agora não"
     optional: true
-- tapOn: "Meus Agendamentos.*"
-- scrollUntilVisible:
-    element:
-      text: "Cancelar agendamento"
-    direction: DOWN
-    timeout: 20000
-- tapOn: "Cancelar agendamento"
-- assertVisible: "Voltar"
+- tapOn: "Perfil.*"
+- assertVisible:
+    id: "change-password-button"
 - tapOn:
-    text: "Cancelar agendamento"
-    index: 1
-- extendedWaitUntil:
-    visible: "Cancelado por você"
-    timeout: 15000
+    id: "edit-email-row"
+- assertVisible: "Alterar e-mail"
+- assertVisible: "Novo e-mail"
+- assertVisible: "Salvar"
+- tapOn: "Cancelar"

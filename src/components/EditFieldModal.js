@@ -43,7 +43,6 @@ export function EditFieldModal({
               secureTextEntry={secureTextEntry}
               keyboardType={keyboardType}
               autoCapitalize="none"
-              autoFocus
               style={styles.input}
             />
           </View>
