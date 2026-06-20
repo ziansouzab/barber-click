@@ -16,4 +16,4 @@ env:
 - tapOn:
     text: "Agora não"
     optional: true
-- assertVisible: "Perfil"
+- assertVisible: "Barber Click"

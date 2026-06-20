@@ -25,6 +25,9 @@ export default function BarbershopDetailScreen() {
     updateProduct,
     deleteProduct,
     refetch,
+    isFavorite,
+    toggleFavorite,
+    rateBarbershop,
   } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
@@ -32,6 +35,8 @@ export default function BarbershopDetailScreen() {
   const [showInfo, setShowInfo] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
+  const [myRating, setMyRating] = useState(0);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
   const shop = barbershops.find((b) => b.id === id);
@@ -67,6 +72,26 @@ export default function BarbershopDetailScreen() {
   const isOwner = user?.isBarber && user.id === shop.owner;
   const photoSize = (width - 40 - 16) / 3;
   const products = shop.products || [];
+  const favorited = isFavorite(shop.id);
+
+  const handleToggleFavorite = async () => {
+    const result = await toggleFavorite(shop.id);
+    if (!result.success) {
+      Alert.alert('Não foi possível favoritar', result.message);
+    }
+  };
+
+  const handleRate = async (value) => {
+    setRatingSubmitting(true);
+    const result = await rateBarbershop(shop.id, value);
+    setRatingSubmitting(false);
+    if (result.success) {
+      setMyRating(value);
+      Alert.alert('Avaliação registrada', 'Obrigado por avaliar!');
+    } else {
+      Alert.alert('Não foi possível avaliar', result.message);
+    }
+  };
 
   const openCreateProduct = () => { setEditingProduct(null); setProductModalOpen(true); };
   const openEditProduct = (p) => { setEditingProduct(p); setProductModalOpen(true); };
@@ -134,7 +159,24 @@ export default function BarbershopDetailScreen() {
           
 
         <View style={styles.header}>
-          <Text style={styles.name}>{shop.name}</Text>
+          <View style={styles.titleRow}>
+            <Text style={styles.name}>{shop.name}</Text>
+            {user && !isOwner && (
+              <TouchableOpacity
+                testID="favorite-toggle"
+                accessibilityLabel={favorited ? 'Remover dos favoritos' : 'Favoritar'}
+                onPress={handleToggleFavorite}
+                hitSlop={10}
+                activeOpacity={0.7}
+              >
+                <FontAwesome
+                  name={favorited ? 'heart' : 'heart-o'}
+                  size={24}
+                  color="#ff2a00"
+                />
+              </TouchableOpacity>
+            )}
+          </View>
 
           <View style={styles.metaRow}>
             <FontAwesome
@@ -229,6 +271,31 @@ export default function BarbershopDetailScreen() {
           </TouchableOpacity>
         )}
 
+        {user && !user.isBarber && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Avaliar</Text>
+            <View style={styles.starsRow}>
+              {[1, 2, 3, 4, 5].map((value) => (
+                <TouchableOpacity
+                  key={value}
+                  testID={`rate-${value}`}
+                  accessibilityLabel={`Avaliar com ${value}`}
+                  onPress={() => handleRate(value)}
+                  disabled={ratingSubmitting}
+                  hitSlop={6}
+                  activeOpacity={0.7}
+                >
+                  <FontAwesome
+                    name={value <= myRating ? 'star' : 'star-o'}
+                    size={32}
+                    color="#F5A623"
+                  />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Produtos</Text>
           {products.length === 0 && !isOwner && (
@@ -309,7 +376,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  starsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
   name: {
+    flex: 1,
     fontSize: 24,
     fontWeight: '700',
     color: '#1D1D1D',

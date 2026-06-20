@@ -7,7 +7,7 @@ import { useBarbershops } from '../../context/BarbershopContext';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 
 export default function HomeScreen() {
-  const { barbershops, refetch } = useBarbershops();
+  const { barbershops, refetch, isFavorite } = useBarbershops();
   const { refreshing, onRefresh } = usePullToRefresh(refetch);
   const router = useRouter();
 
@@ -28,6 +28,7 @@ export default function HomeScreen() {
       rating={item.rating}
       endereco={item.endereco}
       imageUri={item.imageUri}
+      favorite={isFavorite(item.id)}
       onPress={() => router.push(`/business/${item.id}`)}
     />
   );

@@ -3,9 +3,14 @@ import { BarbershopProvider, useBarbershops } from './BarbershopContext';
 import { supabase } from '../lib/supabase';
 import { publicUrl, removeStoredImage, uploadBarbershopImage } from '../lib/storage';
 import { createQueryBuilder } from '../test/supabaseMock';
+import { useAuth } from './AuthContext';
 
 jest.mock('../lib/supabase', () => ({
-  supabase: { from: jest.fn() },
+  supabase: { from: jest.fn(), rpc: jest.fn() },
+}));
+
+jest.mock('./AuthContext', () => ({
+  useAuth: jest.fn(),
 }));
 
 jest.mock('../lib/storage', () => ({
@@ -59,6 +64,7 @@ describe('BarbershopContext', () => {
     uploadBarbershopImage.mockResolvedValue({ path: 'shop-1/new.jpg' });
     removeStoredImage.mockResolvedValue();
     publicUrl.mockImplementation((bucket, path) => (path ? `https://cdn/${bucket}/${path}` : null));
+    useAuth.mockReturnValue({ user: null });
   });
 
   afterEach(() => {
@@ -321,6 +327,121 @@ describe('BarbershopContext', () => {
         response = await result.current.deleteProduct('shop-1', 'sv1');
       });
       expect(response).toEqual({ success: false, message: 'remocao negada' });
+    });
+  });
+
+  describe('favoritos', () => {
+    const comUsuario = () => useAuth.mockReturnValue({ user: { id: 'user-1' } });
+
+    it('carrega os favoritos do usuario no mount', async () => {
+      comUsuario();
+      supabase.from.mockReturnValue(
+        createQueryBuilder({ data: [{ barbershop_id: 'shop-1' }], error: null }),
+      );
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.isFavorite('shop-1')).toBe(true));
+      expect(result.current.isFavorite('shop-2')).toBe(false);
+    });
+
+    it('nao carrega favoritos quando nao ha usuario', async () => {
+      const { result } = await renderBarbershops();
+      expect(result.current.favoriteIds).toEqual([]);
+    });
+
+    it('exige login para favoritar', async () => {
+      const { result } = await renderBarbershops();
+      let response;
+      await act(async () => {
+        response = await result.current.toggleFavorite('shop-1');
+      });
+      expect(response).toEqual({ success: false, message: 'Faça login para favoritar.' });
+    });
+
+    it('adiciona aos favoritos no sucesso', async () => {
+      comUsuario();
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.favoriteIds).toEqual([]));
+      nextFrom({ error: null });
+      let response;
+      await act(async () => {
+        response = await result.current.toggleFavorite('shop-9');
+      });
+      expect(response).toEqual({ success: true });
+      expect(result.current.isFavorite('shop-9')).toBe(true);
+    });
+
+    it('remove dos favoritos quando ja favoritada', async () => {
+      comUsuario();
+      supabase.from.mockReturnValue(
+        createQueryBuilder({ data: [{ barbershop_id: 'shop-1' }], error: null }),
+      );
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.isFavorite('shop-1')).toBe(true));
+      nextFrom({ error: null });
+      await act(async () => {
+        await result.current.toggleFavorite('shop-1');
+      });
+      expect(result.current.isFavorite('shop-1')).toBe(false);
+    });
+
+    it('retorna erro quando o insert do favorito falha', async () => {
+      comUsuario();
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.favoriteIds).toEqual([]));
+      nextFrom({ error: { message: 'favorito negado' } });
+      let response;
+      await act(async () => {
+        response = await result.current.toggleFavorite('shop-9');
+      });
+      expect(response).toEqual({ success: false, message: 'favorito negado' });
+    });
+
+    it('coloca as favoritas no inicio da lista', async () => {
+      comUsuario();
+      supabase.from
+        .mockReturnValueOnce(
+          createQueryBuilder({
+            data: [
+              { ...linhaCompleta, id: 'shop-1' },
+              { ...linhaCompleta, id: 'shop-2' },
+            ],
+            error: null,
+          }),
+        )
+        .mockReturnValueOnce(
+          createQueryBuilder({ data: [{ barbershop_id: 'shop-2' }], error: null }),
+        );
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.isFavorite('shop-2')).toBe(true));
+      expect(result.current.barbershops.map((b) => b.id)).toEqual(['shop-2', 'shop-1']);
+    });
+  });
+
+  describe('rateBarbershop', () => {
+    it('envia a nota e atualiza a media local', async () => {
+      supabase.from.mockReturnValue(createQueryBuilder({ data: [linhaCompleta], error: null }));
+      supabase.rpc.mockResolvedValue({ data: 4.8, error: null });
+      const { result } = await renderBarbershops();
+      let response;
+      await act(async () => {
+        response = await result.current.rateBarbershop('shop-1', 5);
+      });
+      expect(supabase.rpc).toHaveBeenCalledWith('rate_barbershop', {
+        p_barbershop_id: 'shop-1',
+        p_rating: 5,
+      });
+      expect(response).toEqual({ success: true, rating: 4.8 });
+      expect(result.current.barbershops[0].rating).toBe(4.8);
+    });
+
+    it('retorna erro quando a avaliacao falha', async () => {
+      supabase.rpc.mockResolvedValue({ data: null, error: { message: 'sem atendimento' } });
+      const { result } = await renderBarbershops();
+      let response;
+      await act(async () => {
+        response = await result.current.rateBarbershop('shop-1', 5);
+      });
+      expect(response).toEqual({ success: false, message: 'sem atendimento' });
     });
   });
 

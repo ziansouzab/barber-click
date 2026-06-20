@@ -1,0 +1,18 @@
+appId: com.barberclick.app
+env:
+  EMAIL: novo-cliente@teste.com
+  SENHA: "123456"
+  BARBEARIA: "Ian' Barbershop"
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: ${EMAIL}
+      SENHA: ${SENHA}
+- tapOn: ${BARBEARIA}
+- assertVisible: "Agendar horário"
+- tapOn:
+    id: "favorite-toggle"
+- assertVisible: "Remover dos favoritos"
+- back
+- assertVisible: ${BARBEARIA}

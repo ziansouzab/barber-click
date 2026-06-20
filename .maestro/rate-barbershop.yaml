@@ -1,0 +1,17 @@
+appId: com.barberclick.app
+env:
+  EMAIL: novo-cliente@teste.com
+  SENHA: "123456"
+  BARBEARIA: "Ian' Barbershop"
+---
+- runFlow:
+    file: login.yaml
+    env:
+      EMAIL: ${EMAIL}
+      SENHA: ${SENHA}
+- tapOn: ${BARBEARIA}
+- assertVisible: "Avaliar"
+- tapOn:
+    id: "rate-5"
+- assertVisible: "Avaliação registrada"
+- tapOn: "OK"

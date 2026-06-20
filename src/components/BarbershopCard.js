@@ -2,7 +2,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DEFAULT_BARBERSHOP_IMAGE } from '../constants/images';
 
-export function BarbershopCard({ name, rating, endereco, imageUri, onPress }) {
+export function BarbershopCard({ name, rating, endereco, imageUri, onPress, favorite }) {
   const hasRating = typeof rating === 'number' && rating > 0;
   const ratingLabel = hasRating ? rating.toFixed(1) : 'Novo';
 
@@ -19,9 +19,12 @@ export function BarbershopCard({ name, rating, endereco, imageUri, onPress }) {
       />
 
       <View style={styles.infoContainer}>
-        <Text style={styles.name} numberOfLines={1}>
-          {name}
-        </Text>
+        <View style={styles.nameRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {name}
+          </Text>
+          {favorite && <FontAwesome name="heart" size={14} color="#ff2a00" />}
+        </View>
 
         <View style={styles.metaContainer}>
           <FontAwesome
@@ -65,11 +68,17 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     justifyContent: 'center',
   },
+  nameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
   name: {
+    flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 4,
   },
   metaContainer: {
     flexDirection: 'row',
