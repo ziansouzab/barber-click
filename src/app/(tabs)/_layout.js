@@ -89,7 +89,7 @@ export default function TabLayout() {
           ),
           tabBarBadge: pendingCounts.customer || undefined,
           tabBarBadgeStyle: pendingBadgeStyle,
-          href: user && !user.isBarber ? "/myappointments" : null,
+          href: user ? "/myappointments" : null,
         }}
       />
 

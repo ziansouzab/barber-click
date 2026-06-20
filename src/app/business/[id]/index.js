@@ -8,6 +8,7 @@ import { useAuth } from '../../../context/AuthContext';
 import { ProductModal } from '../../../components/ProductModal';
 import { DEFAULT_BARBERSHOP_IMAGE } from '../../../constants/images';
 import { usePullToRefresh } from '../../../hooks/usePullToRefresh';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export const options = {
@@ -28,6 +29,7 @@ export default function BarbershopDetailScreen() {
     isFavorite,
     toggleFavorite,
     rateBarbershop,
+    getMyRating,
   } = useBarbershops();
   const { user } = useAuth();
   const router = useRouter();
@@ -35,7 +37,6 @@ export default function BarbershopDetailScreen() {
   const [showInfo, setShowInfo] = useState(false);
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-  const [myRating, setMyRating] = useState(0);
   const [ratingSubmitting, setRatingSubmitting] = useState(false);
   const { refreshing, onRefresh } = usePullToRefresh(refetch);
 
@@ -73,6 +74,7 @@ export default function BarbershopDetailScreen() {
   const photoSize = (width - 40 - 16) / 3;
   const products = shop.products || [];
   const favorited = isFavorite(shop.id);
+  const myRating = getMyRating(shop.id);
 
   const handleToggleFavorite = async () => {
     const result = await toggleFavorite(shop.id);
@@ -86,7 +88,6 @@ export default function BarbershopDetailScreen() {
     const result = await rateBarbershop(shop.id, value);
     setRatingSubmitting(false);
     if (result.success) {
-      setMyRating(value);
       Alert.alert('Avaliação registrada', 'Obrigado por avaliar!');
     } else {
       Alert.alert('Não foi possível avaliar', result.message);
@@ -261,40 +262,9 @@ export default function BarbershopDetailScreen() {
           </View>
         )}
 
-        {user && !user.isBarber && (
-          <TouchableOpacity
-            style={styles.agendarButton}
-            onPress={() => router.push(`/business/schedule/${id}`)}
-            activeOpacity={0.85}
-          >
-            <Text style={styles.agendarButtonText}>Agendar horário</Text>
-          </TouchableOpacity>
-        )}
+        
 
-        {user && !user.isBarber && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Avaliar</Text>
-            <View style={styles.starsRow}>
-              {[1, 2, 3, 4, 5].map((value) => (
-                <TouchableOpacity
-                  key={value}
-                  testID={`rate-${value}`}
-                  accessibilityLabel={`Avaliar com ${value}`}
-                  onPress={() => handleRate(value)}
-                  disabled={ratingSubmitting}
-                  hitSlop={6}
-                  activeOpacity={0.7}
-                >
-                  <FontAwesome
-                    name={value <= myRating ? 'star' : 'star-o'}
-                    size={32}
-                    color="#F5A623"
-                  />
-                </TouchableOpacity>
-              ))}
-            </View>
-          </View>
-        )}
+        
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Produtos</Text>
@@ -313,6 +283,9 @@ export default function BarbershopDetailScreen() {
                 <Text style={styles.productPrice}>{formatPrice(product.price)}</Text>
               </TouchableOpacity>
             ))}
+
+            
+
             {isOwner && (
               <TouchableOpacity
                 style={[styles.addProductButton, { width: photoSize, height: photoSize }]}
@@ -324,6 +297,41 @@ export default function BarbershopDetailScreen() {
               </TouchableOpacity>
             )}
           </View>
+          
+            {user && !isOwner && (
+              <TouchableOpacity
+                style={styles.agendarButton}
+                onPress={() => router.push(`/business/schedule/${id}`)}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.agendarButtonText}>Agendar horário</Text>
+              </TouchableOpacity>
+            )}
+            {user && !isOwner && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Avaliar</Text>
+                <View style={styles.starsRow}>
+                  {[1, 2, 3, 4, 5].map((value) => (
+                    <TouchableOpacity
+                      key={value}
+                      testID={`rate-${value}`}
+                      accessibilityLabel={`Avaliar com ${value}`}
+                      onPress={() => handleRate(value)}
+                      disabled={ratingSubmitting}
+                      hitSlop={6}
+                      activeOpacity={0.7}
+                    >
+                      <FontAwesome
+                        name={value <= myRating ? 'star' : 'star-o'}
+                        size={32}
+                        color="#F5A623"
+                      />
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
         </View>
 
       </ScrollView>

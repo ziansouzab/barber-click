@@ -30,6 +30,7 @@ export function BarbershopProvider({ children }) {
   const [error, setError] = useState(null);
   const { user } = useAuth();
   const [favoriteIds, setFavoriteIds] = useState([]);
+  const [myRatings, setMyRatings] = useState({});
 
   const fetchBarbershops = useCallback(async () => {
     setLoading(true);
@@ -71,6 +72,32 @@ export function BarbershopProvider({ children }) {
     fetchFavorites();
   }, [fetchFavorites]);
 
+  const fetchMyRatings = useCallback(async () => {
+    if (!user) {
+      setMyRatings({});
+      return;
+    }
+    const { data, error: ratingsError } = await supabase
+      .from('reviews')
+      .select('barbershop_id, rating');
+    if (ratingsError) {
+      console.error(ratingsError);
+      return;
+    }
+    setMyRatings(
+      Object.fromEntries((data ?? []).map((row) => [row.barbershop_id, row.rating])),
+    );
+  }, [user]);
+
+  useEffect(() => {
+    fetchMyRatings();
+  }, [fetchMyRatings]);
+
+  const getMyRating = useCallback(
+    (barbershopId) => myRatings[barbershopId] ?? 0,
+    [myRatings],
+  );
+
   const isFavorite = useCallback(
     (barbershopId) => favoriteIds.includes(barbershopId),
     [favoriteIds],
@@ -105,6 +132,7 @@ export function BarbershopProvider({ children }) {
     setBarbershops((prev) =>
       prev.map((shop) => (shop.id === barbershopId ? { ...shop, rating: data } : shop)),
     );
+    setMyRatings((prev) => ({ ...prev, [barbershopId]: rating }));
     return { success: true, rating: data };
   };
 
@@ -298,6 +326,7 @@ export function BarbershopProvider({ children }) {
     isFavorite,
     toggleFavorite,
     rateBarbershop,
+    getMyRating,
     loading,
     error,
     addBarbershop,

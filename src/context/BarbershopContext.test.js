@@ -445,6 +445,37 @@ describe('BarbershopContext', () => {
     });
   });
 
+  describe('getMyRating', () => {
+    const comUsuario = () => useAuth.mockReturnValue({ user: { id: 'user-1' } });
+
+    it('carrega a nota que o usuario deu no mount', async () => {
+      comUsuario();
+      supabase.from
+        .mockReturnValueOnce(createQueryBuilder({ data: [linhaCompleta], error: null }))
+        .mockReturnValueOnce(createQueryBuilder({ data: [], error: null }))
+        .mockReturnValueOnce(
+          createQueryBuilder({ data: [{ barbershop_id: 'shop-1', rating: 4 }], error: null }),
+        );
+      const { result } = await renderBarbershops();
+      await waitFor(() => expect(result.current.getMyRating('shop-1')).toBe(4));
+      expect(result.current.getMyRating('shop-2')).toBe(0);
+    });
+
+    it('retorna 0 quando o usuario ainda nao avaliou', async () => {
+      const { result } = await renderBarbershops();
+      expect(result.current.getMyRating('shop-1')).toBe(0);
+    });
+
+    it('reflete a nota imediatamente apos avaliar', async () => {
+      supabase.rpc.mockResolvedValue({ data: 5, error: null });
+      const { result } = await renderBarbershops();
+      await act(async () => {
+        await result.current.rateBarbershop('shop-1', 5);
+      });
+      expect(result.current.getMyRating('shop-1')).toBe(5);
+    });
+  });
+
   describe('useBarbershops', () => {
     it('lanca erro quando usado fora do provider', () => {
       expect(() => renderHook(() => useBarbershops())).toThrow(
