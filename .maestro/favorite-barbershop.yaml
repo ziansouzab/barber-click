@@ -1,18 +1,32 @@
 appId: com.barberclick.app
 env:
-  EMAIL: novo-cliente@teste.com
+  EMAIL: ian@teste.com
   SENHA: "123456"
   BARBEARIA: "Ian' Barbershop"
 ---
-- runFlow:
-    file: login.yaml
-    env:
-      EMAIL: ${EMAIL}
-      SENHA: ${SENHA}
-- tapOn: ${BARBEARIA}
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Entrar / Cadastrar.*"
+    timeout: 60000
+- tapOn: "Entrar / Cadastrar.*"
+- assertVisible: "Fazer Login"
+- tapOn: "E-mail"
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+- tapOn: "Entrar"
+- tapOn:
+    text: "Agora não"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: "${BARBEARIA}.*"
+    timeout: 30000
+- tapOn:
+    text: "${BARBEARIA}.*"
 - assertVisible: "Agendar horário"
 - tapOn:
     id: "favorite-toggle"
 - assertVisible: "Remover dos favoritos"
-- back
-- assertVisible: ${BARBEARIA}
