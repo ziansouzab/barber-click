@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { publicUrl, removeStoredImage, uploadBarbershopImage } from '../lib/storage';
 import { horariosParaRows, rowsParaHorarios } from '../utils/horarios';
+import { useAuth } from './AuthContext';
 
 const BarbershopContext = createContext(undefined);
 
@@ -27,6 +28,9 @@ export function BarbershopProvider({ children }) {
   const [barbershops, setBarbershops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { user } = useAuth();
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [myRatings, setMyRatings] = useState({});
 
   const fetchBarbershops = useCallback(async () => {
     setLoading(true);
@@ -48,6 +52,96 @@ export function BarbershopProvider({ children }) {
   useEffect(() => {
     fetchBarbershops();
   }, [fetchBarbershops]);
+
+  const fetchFavorites = useCallback(async () => {
+    if (!user) {
+      setFavoriteIds([]);
+      return;
+    }
+    const { data, error: favoritesError } = await supabase
+      .from('favorites')
+      .select('barbershop_id');
+    if (favoritesError) {
+      console.error(favoritesError);
+      return;
+    }
+    setFavoriteIds((data ?? []).map((row) => row.barbershop_id));
+  }, [user]);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const fetchMyRatings = useCallback(async () => {
+    if (!user) {
+      setMyRatings({});
+      return;
+    }
+    const { data, error: ratingsError } = await supabase
+      .from('reviews')
+      .select('barbershop_id, rating');
+    if (ratingsError) {
+      console.error(ratingsError);
+      return;
+    }
+    setMyRatings(
+      Object.fromEntries((data ?? []).map((row) => [row.barbershop_id, row.rating])),
+    );
+  }, [user]);
+
+  useEffect(() => {
+    fetchMyRatings();
+  }, [fetchMyRatings]);
+
+  const getMyRating = useCallback(
+    (barbershopId) => myRatings[barbershopId] ?? 0,
+    [myRatings],
+  );
+
+  const isFavorite = useCallback(
+    (barbershopId) => favoriteIds.includes(barbershopId),
+    [favoriteIds],
+  );
+
+  const toggleFavorite = async (barbershopId) => {
+    if (!user) return { success: false, message: 'Faça login para favoritar.' };
+    if (favoriteIds.includes(barbershopId)) {
+      const { error: deleteError } = await supabase
+        .from('favorites')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('barbershop_id', barbershopId);
+      if (deleteError) return { success: false, message: deleteError.message };
+      setFavoriteIds((prev) => prev.filter((current) => current !== barbershopId));
+    } else {
+      const { error: insertError } = await supabase
+        .from('favorites')
+        .insert({ user_id: user.id, barbershop_id: barbershopId });
+      if (insertError) return { success: false, message: insertError.message };
+      setFavoriteIds((prev) => [...prev, barbershopId]);
+    }
+    return { success: true };
+  };
+
+  const rateBarbershop = async (barbershopId, rating) => {
+    const { data, error: rateError } = await supabase.rpc('rate_barbershop', {
+      p_barbershop_id: barbershopId,
+      p_rating: rating,
+    });
+    if (rateError) return { success: false, message: rateError.message };
+    setBarbershops((prev) =>
+      prev.map((shop) => (shop.id === barbershopId ? { ...shop, rating: data } : shop)),
+    );
+    setMyRatings((prev) => ({ ...prev, [barbershopId]: rating }));
+    return { success: true, rating: data };
+  };
+
+  const orderedBarbershops = useMemo(() => {
+    const favorites = new Set(favoriteIds);
+    return [...barbershops].sort(
+      (a, b) => (favorites.has(b.id) ? 1 : 0) - (favorites.has(a.id) ? 1 : 0),
+    );
+  }, [barbershops, favoriteIds]);
 
   const addBarbershop = async (barbershop) => {
     const { data, error } = await supabase
@@ -227,7 +321,12 @@ export function BarbershopProvider({ children }) {
   };
 
   const value = {
-    barbershops,
+    barbershops: orderedBarbershops,
+    favoriteIds,
+    isFavorite,
+    toggleFavorite,
+    rateBarbershop,
+    getMyRating,
     loading,
     error,
     addBarbershop,

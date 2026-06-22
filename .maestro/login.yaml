@@ -5,15 +5,18 @@ env:
 ---
 - launchApp:
     clearState: true
-- tapOn: "Entrar / Cadastrar"
+- extendedWaitUntil:
+    visible: "Entrar / Cadastrar.*"
+    timeout: 60000
+- tapOn: "Entrar / Cadastrar.*"
 - assertVisible: "Fazer Login"
 - tapOn: "E-mail"
 - inputText: ${EMAIL}
 - tapOn: "Senha"
 - inputText: ${SENHA}
-- hideKeyboard
+- pressKey: Enter
 - tapOn: "Entrar"
 - tapOn:
     text: "Agora não"
     optional: true
-- assertVisible: "Perfil"
+- assertVisible: "Barber Click"

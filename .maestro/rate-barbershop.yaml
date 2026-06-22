@@ -2,6 +2,7 @@ appId: com.barberclick.app
 env:
   EMAIL: email@email.com
   SENHA: "123456"
+  BARBEARIA: "Ian' Barbershop"
 ---
 - launchApp:
     clearState: true
@@ -19,17 +20,14 @@ env:
 - tapOn:
     text: "Agora não"
     optional: true
-- tapOn: "Meus Agendamentos.*"
-- scrollUntilVisible:
-    element:
-      text: "Cancelar agendamento"
-    direction: DOWN
-    timeout: 20000
-- tapOn: "Cancelar agendamento"
-- assertVisible: "Voltar"
-- tapOn:
-    text: "Cancelar agendamento"
-    index: 1
 - extendedWaitUntil:
-    visible: "Cancelado por você"
-    timeout: 15000
+    visible:
+      text: "${BARBEARIA}.*"
+    timeout: 30000
+- tapOn:
+    text: "${BARBEARIA}.*"
+- assertVisible: "Avaliar"
+- tapOn:
+    id: "rate-5"
+- assertVisible: "Avaliação registrada"
+- tapOn: "OK"

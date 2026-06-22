@@ -1,25 +1,49 @@
 appId: com.barberclick.app
 env:
-  EMAIL: cliente@teste.com
+  EMAIL: email@email.com
   SENHA: "123456"
-  BARBEARIA: Barbearia Teste
-  SERVICO: Corte
-  DATA: "20/06/2026"
+  BARBEARIA: "Barbearia do Gabriel"
+  SERVICO: "Corte no fogo"
+  DATA: "23/06/2026"
   HORARIO: "09:00"
 ---
-- runFlow:
-    file: login.yaml
-    env:
-      EMAIL: ${EMAIL}
-      SENHA: ${SENHA}
-- tapOn: "Home"
-- tapOn: ${BARBEARIA}
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Entrar / Cadastrar.*"
+    timeout: 60000
+- tapOn: "Entrar / Cadastrar.*"
+- assertVisible: "Fazer Login"
+- tapOn: "E-mail"
+- inputText: ${EMAIL}
+- tapOn: "Senha"
+- inputText: ${SENHA}
+- pressKey: Enter
+- tapOn: "Entrar"
+- tapOn:
+    text: "Agora não"
+    optional: true
+- extendedWaitUntil:
+    visible:
+      text: "${BARBEARIA}.*"
+    timeout: 30000
+- tapOn:
+    text: "${BARBEARIA}.*"
 - assertVisible: "Agendar horário"
 - tapOn: "Agendar horário"
 - assertVisible: "Serviço"
-- tapOn: ${SERVICO}
-- tapOn: ${DATA}
+- tapOn:
+    text: "${SERVICO}.*"
+- tapOn:
+    text: "${DATA}.*"
 - tapOn: ${HORARIO}
+- scrollUntilVisible:
+    element:
+      text: "Confirmar agendamento"
+    direction: DOWN
+    timeout: 10000
 - tapOn: "Confirmar agendamento"
-- assertVisible: "Agendamento enviado!"
+- extendedWaitUntil:
+    visible: "Agendamento enviado!"
+    timeout: 15000
 - tapOn: "OK"
